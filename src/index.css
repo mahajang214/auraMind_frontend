@@ -1,0 +1,17 @@
+@import "tailwindcss";
+/* 
+.premium_btn {
+    @apply w-full h-14 bg-[#1F2329] text-white rounded-xl flex items-center justify-between px-5 text-base font-semibold shadow-md shadow-black/40 border border-white/10;
+}
+
+.premium_content_box {
+    @apply w-full h-full border border-white/10 rounded-2xl p-3 bg-[#1F2329] overflow-y-auto shadow-inner;
+}
+
+.nav_btn {
+    @apply flex flex-col items-center justify-center text-gray-300 text-xs w-full py-2 hover:text-white;
+}
+
+.nav_btn_active {
+    @apply flex flex-col items-center justify-center text-white text-xs w-full py-2 bg-[#00ADB5] rounded-xl shadow-lg;
+} */
