@@ -43,11 +43,12 @@ function SelfReflextion() {
 
       setHabits(response.data.data[0].habits.length);
       setAllHabits(response.data.data);
+      // console.log("length : ",response.data.data[0].habits.length)
 
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching Habits:", error);
-      showToast("error", "Something went wrong.");
+      showToast("error", "You haven't created any habits yet.");
       setIsLoading(false);
     }
   };
@@ -63,12 +64,12 @@ function SelfReflextion() {
         ? Object.keys(response.data.data).length
         : 0;
       // console.log("Number of passions:", passionsCount);
-      setPassions(passionsCount);
+      setPassions(passionsCount );
       setAllPassions(response.data.data);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching Passions:", error);
-      showToast("error", "Something went wrong.");
+      showToast("error", "You haven't created any passions yet.");
       setIsLoading(false);
     }
   };

@@ -17,6 +17,7 @@ function Timer() {
   const backendURL = import.meta.env.VITE_BACKEND_URL;
   const [activateQuestions, setActivateQuestions] = useState(false);
   const [questionAnswers, setQuestionAnswers] = useState({});
+  const currentDate = new Date();
   const navigate = useNavigate();
   // store
   const reduxUser = useSelector((state) => state.user.user);
@@ -24,6 +25,9 @@ function Timer() {
   // const reduxTrack=useSelector((state)=>state.activeTrack.activeTrack)
   const { activeTrack, isPlaying } = useSelector((state) => state.activeTrack);
   const [showBreak, SetshowBreak] = useState(false);
+  const [pomodoroIsActive, setPomodoroIsActive] = useState(false);
+  const [showPomodoroAsk, setShowPomodoroAsk] = useState(true);
+
   // console.log("redux track:", activeTrack);
   // console.log("redux User :",reduxUser)
 
@@ -35,6 +39,13 @@ function Timer() {
       clearInterval(timerRef.current);
       setIsRunning(false);
       SetshowBreak(true);
+
+      // PAUSE Pomodoro also
+      if (pomodoroIntervalRef.current) {
+        clearInterval(pomodoroIntervalRef.current);
+        pomodoroIntervalRef.current = null;
+        pomodoroPausedRef.current = true; // Mark paused
+      }
     } else {
       // Start timer
       setIsRunning(true);
@@ -56,6 +67,21 @@ function Timer() {
           return { hr, min, sec };
         });
       }, 1000);
+
+      if (pomodoroPausedRef.current && pomodoroIsActive) {
+        pomodoroPausedRef.current = false;
+
+        // Restart Pomodoro interval from saved seconds
+        pomodoroIntervalRef.current = setInterval(() => {
+          pomodoroSecondsRef.current++;
+
+          if (pomodoroSecondsRef.current >= pomodoroLimit) {
+            clearInterval(pomodoroIntervalRef.current);
+            pomodoroIntervalRef.current = null;
+            pomodoroSecondsRef.current = 0;
+          }
+        }, 1000);
+      }
     }
   };
 
@@ -67,8 +93,24 @@ function Timer() {
     SetshowBreak(false);
     setTime({ hr: 0, min: 0, sec: 0 });
   };
+  const isToday = (d) => {
+    const x = new Date(d),
+      t = new Date();
+    return x.toDateString() === t.toDateString();
+  };
 
   useEffect(() => {
+    if (
+      activeTrack.answersCompleted === true &&
+      isToday(activeTrack.updatedAt)
+    ) {
+      return setTime({
+        hr: activeTrack.duration.hr,
+        min: activeTrack.duration.min,
+        sec: activeTrack.duration.sec,
+      });
+    }
+
     return () => clearInterval(timerRef.current);
   }, []);
 
@@ -78,13 +120,28 @@ function Timer() {
     setSaveClicked(!saveClicked);
     // }
     // Check if saved duration is greater than the last tracked duration; alert the user if so
-    if (
-      activeTrack.duration.hr > lastTrack.hr ||
-      activeTrack.duration.min > lastTrack.min ||
-      activeTrack.duration.sec > lastTrack.sec
-    ) {
+    // Allow save if duration.hr > 5 and min > 0 and sec > 0, even if duration is greater than lastTrack.
+    const activeTotal =
+      activeTrack.duration.hr * 3600 +
+      activeTrack.duration.min * 60 +
+      activeTrack.duration.sec;
+
+    const lastTotal =
+      lastTrack.duration.hr * 3600 +
+      lastTrack.duration.min * 60 +
+      lastTrack.duration.sec;
+
+    const FIVE_HOURS = 5 * 3600;
+
+    // Allow if >= 5 hours
+    if (activeTotal >= FIVE_HOURS) {
+      // OK to continue
+    } else if (activeTotal <= lastTotal) {
+      // Not greater than last track → STOP
       return;
     }
+
+    // If we reach here → continue saving
 
     try {
       setIsLoading(true);
@@ -183,150 +240,324 @@ function Timer() {
     }
   }, [saveClicked]);
 
+  // handle pomodoro
+  // ======= Independent Pomodoro Timer ========
+  // React-safe persistent refs
+  // Pomodoro refs (persist even on re-render)
+  const pomodoroIntervalRef = useRef(null);
+  const pomodoroSecondsRef = useRef(0);
+  const pomodoroPausedRef = useRef(false);
+
+  const pomodoroLimit = 45 * 60; // 2700 secs
+  // console.log("pomodo is paused ? : ",pomodoroPausedRef)
+
+  const handlePomodoro = (onFinish) => {
+    // Start main timer if not running
+    if (!isRunning) handleStartPause();
+
+    // If already running → ignore
+    if (pomodoroIntervalRef.current) return;
+
+    // If Pomodoro was paused earlier → continue
+    if (!pomodoroPausedRef.current) {
+      pomodoroSecondsRef.current = 0; // fresh start only when NEW
+    }
+
+    pomodoroPausedRef.current = false;
+
+    pomodoroIntervalRef.current = setInterval(() => {
+      pomodoroSecondsRef.current++;
+
+      // Auto-finish at 45 mins
+      if (pomodoroSecondsRef.current >= pomodoroLimit) {
+        handleStartPause();
+        showToast("success", "Pomodoro complete! Take a well-deserved break.");
+        clearInterval(pomodoroIntervalRef.current);
+        pomodoroIntervalRef.current = null;
+        pomodoroSecondsRef.current = 0;
+        pomodoroPausedRef.current = false;
+
+        if (typeof onFinish === "function") onFinish();
+      }
+    }, 1000);
+  };
+
+  const handleStopPomodoro = () => {
+    // Stop main timer
+    handleStartPause();
+
+    // Stop Pomodoro
+    clearInterval(pomodoroIntervalRef.current);
+    pomodoroIntervalRef.current = null;
+    pomodoroSecondsRef.current = 0;
+    pomodoroPausedRef.current = false;
+  };
+
   return (
     <div className="flex items-center justify-center h-screen bg-[#222831] text-white">
       {/* mobile */}
       <div className="lg:hidden flex flex-col items-center justify-between w-[90%] max-w-[480px] h-[95vh] bg-linear-to-b from-[#1B1E22] to-[#2A2F35] rounded-3xl p-6 gap-8 shadow-[0_0_40px_rgba(0,0,0,0.45)] border border-white/10 backdrop-blur-xl relative overflow-hidden">
         {/* HEADER */}
-      <h1 className="text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-linear-to-r from-[#FFD369] to-[#FBB03B] drop-shadow-lg">
-        Auramind
-      </h1>
+        <h1 className="text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-linear-to-r from-[#FFD369] to-[#FBB03B] drop-shadow-lg">
+          Auramind
+        </h1>
 
-       {/* MAIN CARD */}
-       <div className="flex flex-col items-center justify-between w-full h-full bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl">
-       {/* TOP BAR */}
-       <div className="flex justify-between items-center w-full p-4">
-          <h1 className="text-left w-full text-2xl font-semibold text-white/90">{!activateQuestions ? "Tracks" : "Questions"}</h1>
+        {/* MAIN CARD */}
+        <div className="flex flex-col items-center justify-between w-full h-full bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl">
+          {/* TOP BAR */}
+          <div className="flex justify-between items-center w-full p-4">
+            <h1 className="text-left w-full text-2xl font-semibold text-white/90">
+              {!activateQuestions ? "Tracks" : "Questions"}
+            </h1>
 
-          <AnimatePresence >
-            {!activateQuestions && (
-              <motion.button
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 40 }}
-                transition={{ duration: 0.36, type: "spring" }}
-                className="flex items-center text-[#00F0FF] hover:text-white font-semibold px-4 py-1 rounded-xl bg-white/5 backdrop-blur-lg shadow-lg border border-white/10 cursor-pointer"
-                onClick={() => navigate("/")}
-                aria-label="Go back"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-          
-
-         {/* CONTENT AREA */}
-        <div className="flex flex-col gap-3 items-center w-full h-full border-t border-white/5 rounded-b-3xl py-3 px-2 overflow-y-auto custom-scroll relative">
             <AnimatePresence>
-            {!activateQuestions ? (
-              
-              <motion.div initial={{opacity:0}} animate={{opacity:1, transition:{duration:.5}}} className="first_Container bg-[#211E28]/40 w-full h-full flex flex-col justify-center items-center py-6 border-t border-white/5 rounded-b-3xl px-2">
-                <h1 className="mt-5 text-2xl">Setup New Record</h1>
-
-                {/* Start / Pause Button */}
+              {!activateQuestions && (
                 <motion.button
-                  type="button"
-                  className="mt-5 cursor-pointer"
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  onClick={handleStartPause}
-                  tabIndex={0}
-                  aria-label={isRunning ? "Pause timer" : "Start timer"}
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 40 }}
+                  transition={{ duration: 0.36, type: "spring" }}
+                  className="flex items-center text-[#00F0FF] hover:text-white font-semibold px-4 py-1 rounded-xl bg-white/5 backdrop-blur-lg shadow-lg border border-white/10 cursor-pointer"
+                  onClick={() => navigate("/")}
+                  aria-label="Go back"
                 >
-                  {isRunning ? (
-                    // Pause icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 100 100"
-                      height={192}
-                      width={192}
-                      fill="#00ADB5"
-                    >
-                      <rect
-                        x="30"
-                        y="25"
-                        width="12"
-                        height="50"
-                        rx="3"
-                        fill="#00ADB5"
-                      />
-                      <rect
-                        x="58"
-                        y="25"
-                        width="12"
-                        height="50"
-                        rx="3"
-                        fill="#00ADB5"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        stroke="#EEEEEE"
-                        strokeWidth="5"
-                        fill="none"
-                      />
-                    </svg>
-                  ) : (
-                    // Play icon
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 100 100"
-                      height={192}
-                      width={192}
-                      fill="#EEEEEE"
-                    >
-                      <polygon points="40,30 70,50 40,70" fill="#00ADB5" />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        stroke="#EEEEEE"
-                        strokeWidth="5"
-                        fill="none"
-                      />
-                    </svg>
-                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back
                 </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
 
-                {/* Timer Display */}
-                <h1
-                  className={`mt-5 text-3xl font-mono ${
-                    time.hr < activeTrack.duration.hr ||
-                    (time.hr === activeTrack.duration.hr &&
-                      (time.min < activeTrack.duration.min ||
-                        (time.min === activeTrack.duration.min &&
-                          time.sec < activeTrack.duration.sec)))
-                      ? "text-red-500"
-                      : "text-green-500"
-                  }`}
+          {/* CONTENT AREA */}
+          <div className="flex flex-col gap-3 items-center w-full h-full border-t border-white/5 rounded-b-3xl py-3 px-2 overflow-y-auto custom-scroll relative">
+            <AnimatePresence>
+              {!activateQuestions ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  className="first_Container bg-[#211E28]/40 w-full h-full flex flex-col justify-center items-center py-6 border-t border-white/5 rounded-b-3xl px-2"
                 >
-                  {`${formatTime(time.hr)}:${formatTime(time.min)}:${formatTime(
-                    time.sec
-                  )}`}
-                </h1>
+                  <h1 className="mt-5 text-2xl">Setup New Record</h1>
+                  {/* pomodoro for 45 min break 5 min */}
+                  <AnimatePresence>
+                    {pomodoroPausedRef.current == false && (
+                      <motion.button
+                        onClick={() => handlePomodoro()}
+                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        whileHover={{
+                          scale: 1.08,
+                          boxShadow: "0 0 25px #00ADB5",
+                          background:
+                            "linear-gradient(135deg, rgba(0,173,181,0.9), rgba(57,62,70,0.9))",
+                        }}
+                        whileTap={{
+                          scale: 0.95,
+                          boxShadow: "0 0 10px #00ADB5",
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                        }}
+                        className="
+                    my-5
+                      px-4 py-2
+                      rounded-2xl
+                      text-base sm:text-lg
+                      bg-linear-to-br from-[#00ADB5]/60 to-[#393E46]/60
+                      border border-[#00ADB5]/40 shadow-xl backdrop-blur-xl
+                      text-[#EEEEEE] tracking-wide cursor-pointer
+                      flex items-center justify-center gap-3
+                      transition-all duration-200
+                    "
+                        style={{
+                          minWidth: "230px",
+                          maxWidth: "400px",
+                        }}
+                      >
+                        <motion.span
+                          animate={{ rotate: [0, 6, -6, 0] }}
+                          transition={{ repeat: Infinity, duration: 3 }}
+                          className="text-xl sm:text-2xl"
+                        >
+                          ⏳
+                        </motion.span>
+                        <span className="truncate">Pomodoro</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
 
-                {/* Stop Button */}
-                <AnimatePresence>
-                  {isRunning && (
+                  {/* Start / Pause Button */}
+                  <motion.button
+                    type="button"
+                    className="mt-5 cursor-pointer"
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    onClick={handleStartPause}
+                    tabIndex={0}
+                    aria-label={isRunning ? "Pause timer" : "Start timer"}
+                  >
+                    {isRunning ? (
+                      // Pause icon
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 100 100"
+                        height={192}
+                        width={192}
+                        fill="#00ADB5"
+                      >
+                        <rect
+                          x="30"
+                          y="25"
+                          width="12"
+                          height="50"
+                          rx="3"
+                          fill="#00ADB5"
+                        />
+                        <rect
+                          x="58"
+                          y="25"
+                          width="12"
+                          height="50"
+                          rx="3"
+                          fill="#00ADB5"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          stroke="#EEEEEE"
+                          strokeWidth="5"
+                          fill="none"
+                        />
+                      </svg>
+                    ) : (
+                      // Play icon
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 100 100"
+                        height={192}
+                        width={192}
+                        fill="#EEEEEE"
+                      >
+                        <polygon points="40,30 70,50 40,70" fill="#00ADB5" />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          stroke="#EEEEEE"
+                          strokeWidth="5"
+                          fill="none"
+                        />
+                      </svg>
+                    )}
+                  </motion.button>
+
+                  {/* Timer Display */}
+                  <h1
+                    className={`mt-5 text-3xl font-mono ${
+                      time.hr < activeTrack.duration.hr ||
+                      (time.hr === activeTrack.duration.hr &&
+                        (time.min < activeTrack.duration.min ||
+                          (time.min === activeTrack.duration.min &&
+                            time.sec < activeTrack.duration.sec)))
+                        ? "text-red-500"
+                        : "text-green-500"
+                    }`}
+                  >
+                    {`${formatTime(time.hr)}:${formatTime(
+                      time.min
+                    )}:${formatTime(time.sec)}`}
+                  </h1>
+
+                  {/* Stop Button */}
+                  <AnimatePresence>
+                    {isRunning && (
+                      <motion.button
+                        onClick={handleStop}
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.7, opacity: 0, y: 25 }}
+                        whileHover={{ scale: 1.05, backgroundColor: "#363e4c" }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 25,
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 mt-8 rounded-xl bg-[#222831] text-[#EEEEEE] font-bold text-lg shadow-md border-2 border-[#00ADB5] focus:outline-none cursor-pointer"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="#EEEEEE"
+                          strokeWidth={2}
+                        >
+                          <rect
+                            x="6"
+                            y="6"
+                            width="12"
+                            height="12"
+                            rx="3"
+                            fill="#EEEEEE"
+                          />
+                        </svg>
+                        Stop
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Show track summary */}
+                  {lastTrack && (
+                    <motion.div
+                      className="mt-8 p-4 bg-[#00ADB5] text-[#222831] rounded-xl shadow-md text-lg font-bold"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      Last Track:
+                      {`${formatTime(lastTrack.hr)}:${formatTime(
+                        lastTrack.min
+                      )}:${formatTime(lastTrack.sec)}`}
+                    </motion.div>
+                  )}
+                  {/* break timer */}
+                  {!isRunning && showBreak && (
+                    <div className="mt-5">
+                      <AlarmTimer cn={"w-full mt-4"} />
+                    </div>
+                  )}
+
+                  {/* save data */}
+                  {lastTrack && (
                     <motion.button
-                      
-                      onClick={handleStop}
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.7, opacity: 0, y: 25 }}
-                      whileHover={{ scale: 1.05, backgroundColor: "#363e4c" }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      whileHover={{ scale: 1.05, backgroundColor: "#06c4cc" }}
                       whileTap={{ scale: 0.97 }}
                       transition={{
                         type: "spring",
                         stiffness: 300,
                         damping: 25,
                       }}
-                      className="flex items-center gap-2 px-6 py-3 mt-8 rounded-xl bg-[#222831] text-[#EEEEEE] font-bold text-lg shadow-md border-2 border-[#00ADB5] focus:outline-none cursor-pointer"
+                      className="flex justify-center items-center gap-2 w-full py-3 mt-4 rounded-xl bg-[#41DC1E] text-[#EEEEEE] font-bold text-lg shadow-md border-2 border-[#222831] focus:outline-none cursor-pointer"
+                      onClick={handleSave}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -336,183 +567,127 @@ function Timer() {
                         stroke="#EEEEEE"
                         strokeWidth={2}
                       >
-                        <rect
-                          x="6"
-                          y="6"
-                          width="12"
-                          height="12"
-                          rx="3"
-                          fill="#EEEEEE"
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      Stop
+                      Save
                     </motion.button>
                   )}
-                </AnimatePresence>
-
-                {/* Show track summary */}
-                {lastTrack && (
-                  <motion.div
-                    className="mt-8 p-4 bg-[#00ADB5] text-[#222831] rounded-xl shadow-md text-lg font-bold"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    Last Track:
-                    {`${formatTime(lastTrack.hr)}:${formatTime(
-                      lastTrack.min
-                    )}:${formatTime(lastTrack.sec)}`}
-                  </motion.div>
-                )}
-                {/* break timer */}
-                {!isRunning && showBreak && (
-                  <div className="mt-5">
-                    <AlarmTimer cn={"w-full mt-4"} />
-                  </div>
-                )}
-
-                {/* save data */}
-                {lastTrack && (
-                  <motion.button
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    whileHover={{ scale: 1.05, backgroundColor: "#06c4cc" }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 25,
-                    }}
-                    className="flex justify-center items-center gap-2 w-full py-3 mt-4 rounded-xl bg-[#41DC1E] text-[#EEEEEE] font-bold text-lg shadow-md border-2 border-[#222831] focus:outline-none cursor-pointer"
-                    onClick={handleSave}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="#EEEEEE"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    Save
-                  </motion.button>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div initial={{opacity:0}} animate={{opacity:1, transition:{duration:.5}}}  className="second_Container bg-[#222831] w-full h-full flex flex-col items-center py-6 rounded-2xl px-2 scroll-auto">
-                <div className="w-full max-w-xl bg-[#393E46] p-6 rounded-2xl shadow-lg flex flex-col gap-4 overflow-hidden relative">
-                  {/* Animated question box */}
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                    
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
-                      className="flex flex-col gap-4"
-                    >
-                      <h2 className="text-xl font-semibold  text-white w-full text-left">
-                        Q. {currentQuestion.text}
-                      </h2>
-
-                      <motion.textarea
-                       
-                        className="w-full p-3 resize-none rounded-lg bg-[#222831] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00ADB5]"
-                        rows={4}
-                        placeholder="Type your answer here..."
-                        value={questionAnswers[currentQuestion.id] || ""}
-                        onChange={handleAnswerChange}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                      />
-
-                      <motion.button
-                        onClick={() => {
-                          // Only call handleNext if there is an answer
-                          if (
-                            questionAnswers[currentQuestion.id] &&
-                            questionAnswers[currentQuestion.id].trim() !== ""
-                          ) {
-                            handleNext();
-                          }
-                        }}
-                        className="bg-[#00ADB5] hover:bg-[#05c1cc] text-white py-2 rounded-lg font-medium cursor-pointer"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        {currentIndex < questions.length - 1
-                          ? "Next Question →"
-                          : "Finish ✅"}
-                      </motion.button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { duration: 0.5 } }}
+                  className="second_Container bg-[#222831] w-full h-full flex flex-col items-center py-6 rounded-2xl px-2 scroll-auto"
+                >
+                  <div className="w-full max-w-xl bg-[#393E46] p-6 rounded-2xl shadow-lg flex flex-col gap-4 overflow-hidden relative">
+                    {/* Animated question box */}
+                    <AnimatePresence mode="wait">
                       <motion.div
-                        className="mt-4 flex flex-col items-center w-full"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        className="flex flex-col gap-4"
                       >
-                        {/* Progress bar with animation */}
-                        <div className="w-full bg-[#393E46] rounded-full h-2.5 mb-2 overflow-hidden">
-                          <motion.div
-                            className="bg-[#00ADB5] h-2.5 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{
-                              width: `${
-                                ((currentIndex + 1) / questions.length) * 100
-                              }%`,
-                            }}
-                            transition={{
-                              duration: 0.5,
-                              ease: "easeInOut",
-                            }}
-                          />
-                        </div>
+                        <h2 className="text-xl font-semibold  text-white w-full text-left">
+                          Q. {currentQuestion.text}
+                        </h2>
 
-                        <motion.span
-                          className="text-sm text-gray-400 text-center"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
+                        <motion.textarea
+                          className="w-full p-3 resize-none rounded-lg bg-[#222831] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00ADB5]"
+                          rows={4}
+                          placeholder="Type your answer here..."
+                          value={questionAnswers[currentQuestion.id] || ""}
+                          onChange={handleAnswerChange}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           transition={{ delay: 0.2 }}
+                        />
+
+                        <motion.button
+                          onClick={() => {
+                            // Only call handleNext if there is an answer
+                            if (
+                              questionAnswers[currentQuestion.id] &&
+                              questionAnswers[currentQuestion.id].trim() !== ""
+                            ) {
+                              handleNext();
+                            }
+                          }}
+                          className="bg-[#00ADB5] hover:bg-[#05c1cc] text-white py-2 rounded-lg font-medium cursor-pointer"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={{ type: "spring", stiffness: 300 }}
                         >
-                          Question {currentIndex + 1} of {questions.length}
-                        </motion.span>
+                          {currentIndex < questions.length - 1
+                            ? "Next Question →"
+                            : "Finish ✅"}
+                        </motion.button>
+                        <motion.div
+                          className="mt-4 flex flex-col items-center w-full"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          {/* Progress bar with animation */}
+                          <div className="w-full bg-[#393E46] rounded-full h-2.5 mb-2 overflow-hidden">
+                            <motion.div
+                              className="bg-[#00ADB5] h-2.5 rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{
+                                width: `${
+                                  ((currentIndex + 1) / questions.length) * 100
+                                }%`,
+                              }}
+                              transition={{
+                                duration: 0.5,
+                                ease: "easeInOut",
+                              }}
+                            />
+                          </div>
+
+                          <motion.span
+                            className="text-sm text-gray-400 text-center"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            Question {currentIndex + 1} of {questions.length}
+                          </motion.span>
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
 
         {/* NAV BAR */}
-      <div className="navigation_btns w-full h-[10%] border border-white/10 rounded-2xl px-3 py-1 backdrop-blur-xl bg-[#1F242A]/50 shadow-2xl">
-        <div className="flex justify-between items-center h-full w-full">
-          {[
-            { label: "Home", path: "/" },
-            { label: "Add", path: "/create" },
-            { label: "Tasks", path: "/self-reflection" },
-            { label: "Progress", path: "/analytics" },
-            { label: "Profile", path: "/profile" },
-          ].map((btn,key2) => (
-            <button
-            key={`${key2}`}
-              onClick={() => navigate(btn.path)}
-              className="flex flex-col justify-center items-center h-full w-full rounded-xl hover:bg-white/5 transition-all text-white/80 cursor-pointer"
-            >
-              <span className="text-sm mt-1">{btn.label}</span>
-            </button>
-          ))}
+        <div className="navigation_btns w-full h-[10%] border border-white/10 rounded-2xl px-3 py-1 backdrop-blur-xl bg-[#1F242A]/50 shadow-2xl">
+          <div className="flex justify-between items-center h-full w-full">
+            {[
+              { label: "Home", path: "/" },
+              { label: "Add", path: "/create" },
+              { label: "Tasks", path: "/self-reflection" },
+              { label: "Progress", path: "/analytics" },
+              { label: "Profile", path: "/profile" },
+            ].map((btn, key2) => (
+              <button
+                key={`${key2}`}
+                onClick={() => navigate(btn.path)}
+                className="flex flex-col justify-center items-center h-full w-full rounded-xl hover:bg-white/5 transition-all text-white/80 cursor-pointer"
+              >
+                <span className="text-sm mt-1">{btn.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
       </div>
       {/* laptop */}
       {!activateQuestions ? (
@@ -525,6 +700,75 @@ function Timer() {
           >
             AuraMind
           </motion.h1>
+
+          {/* POMODORO CONFIRMATION MODAL */}
+
+          <AnimatePresence>
+            {showPomodoroAsk && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-md flex items-center justify-center "
+              >
+                <motion.div
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                  className="
+          bg-[#222831]/80 border border-[#00ADB5]/30
+          rounded-3xl shadow-2xl p-6 sm:p-8 w-[90%] max-w-md
+          text-[#EEEEEE] backdrop-blur-2xl
+        "
+                >
+                  <h2 className="text-xl sm:text-2xl font-semibold text-center mb-4">
+                    🧠 Pomodoro Deep-Work
+                  </h2>
+
+                  <p className="text-center text-sm sm:text-base mb-6 text-[#d7d7d7]">
+                    Do you want to start a{" "}
+                    <span className="text-[#00ADB5] font-medium">
+                      45-minute
+                    </span>{" "}
+                    deep-focus Pomodoro session?
+                  </p>
+
+                  {/* BUTTONS */}
+                  <div className="flex gap-4 justify-center">
+                    {/* YES Button */}
+                    <motion.button
+                      whileHover={{
+                        scale: 1.07,
+                        boxShadow: "0 0 20px #00ADB5",
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-5 py-2.5 rounded-xl bg-[#00ADB5] text-[#222831] font-semibold shadow-lg cursor-pointer"
+                      onClick={() => {
+                        setShowPomodoroAsk(false);
+                        handlePomodoro();
+                      }}
+                    >
+                      Yes
+                    </motion.button>
+
+                    {/* NO Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-5 py-2.5 rounded-xl bg-[#393E46] text-[#EEEEEE] border border-[#555] cursor-pointer"
+                      onClick={() => setShowPomodoroAsk(false)}
+                    >
+                      No
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* timers */}
+
           <div className="flex items-center justify-between w-full  px-6">
             <motion.h1
               initial={{ opacity: 0, x: -60 }}
@@ -580,7 +824,7 @@ function Timer() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6 text-yellow-100 animate-pulse"
+                        className="w-6 h-6 text-yellow-100 animate-pulse "
                       >
                         <rect x="6" y="4" width="4" height="16" rx="1.5" />
                         <rect x="14" y="4" width="4" height="16" rx="1.5" />
@@ -594,7 +838,9 @@ function Timer() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-6 h-6 text-emerald-100 drop-shadow animate-pulse"
+                        className={`w-6 h-6 text-emerald-100 drop-shadow animate-pulse ${
+                          showPomodoroAsk == true && "hidden"
+                        }`}
                       >
                         <polygon points="8,5 19,12 8,19" />
                       </svg>
@@ -605,7 +851,6 @@ function Timer() {
                 {/* Stop Button */}
 
                 <motion.button
-                  
                   onClick={handleStop}
                   className="w-full flex justify-center items-center gap-2 rounded bg-linear-to-r from-red-500 via-rose-600 to-pink-700 shadow-[0_0_20px_rgba(239,68,68,0.6)]
 hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]
@@ -701,7 +946,6 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]
             {/* Animated question box */}
             <AnimatePresence mode="wait">
               <motion.div
-               
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
@@ -713,7 +957,6 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]
                 </h2>
 
                 <motion.textarea
-                 
                   className="w-full p-3 resize-none rounded-lg bg-[#0F1115] text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00ADB5] h-88"
                   rows={4}
                   placeholder="Type your answer here..."
@@ -781,7 +1024,6 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]
             </AnimatePresence>
           </div>
         </div>
-        
       )}
     </div>
   );

@@ -33,10 +33,22 @@ const HomePage = () => {
   const [isDragging, setIsDragging] = useState(false);
   //
   const [whichDevice, setWhichDevice] = useState(null);
+  // edit tracks
+  const [isEdit, setIsEdit] = useState(false);
+  const [trackOldData, settrackOldData] = useState({
+    name: "",
+    category: "",
+    id: "",
+  });
+  const [trackNewName, setTrackNewName] = useState("");
+  const [trackNewCategory, setTrackNewCategory] = useState(null);
 
   // store
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+
+  // menu for delete and edit
+  const [showMenu, setShowMenu] = useState(false);
 
   // refresh token
   useEffect(() => {
@@ -109,7 +121,6 @@ const HomePage = () => {
     dispatch(setActiveTrack(trackDetails));
     setActiveTrackInfo(trackDetails);
   };
-  
 
   // useEffect(() => {
   //   // Check for previous login (token in localStorage)
@@ -247,10 +258,40 @@ const HomePage = () => {
     }
   };
 
+  // handle edit tracks
+  const handleEditTracks = async (id) => {
+    try {
+      if (!id) {
+        return showToast("warning", "Something went wrong!");
+      }
+      if (trackNewCategory === null && trackNewName === "") {
+        return showToast("warning", "Please edit before saving");
+      }
+      const res = await axios.patch(
+        `${backendURL}/api/features/update-track-without-duration/${id}`,
+        {
+          title: trackNewName || trackOldData.name,
+          category: trackNewCategory || trackOldData.category,
+        },
+        {
+          withCredentials: true,
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast("success", "successfully update track");
+      settrackOldData({ name: "", category: "", id: "" });
+      setTrackNewCategory(null);
+      setTrackNewName("");
+      return;
+    } catch (error) {
+      console.log("Error updating track : ", error.message);
+      return showToast("error", "Error updating track");
+    }
+  };
 
   return (
     <>
-        {/* mobile responsive design */}
+      {/* mobile responsive design */}
       <div className="flex lg:hidden  items-center justify-center h-screen bg-[#222831] text-white ">
         <div className=" flex lg:hidden flex-col items-center justify-between w-[90%] max-w-[480px] h-[95vh] bg-linear-to-b from-[#1B1E22] to-[#2A2F35] rounded-3xl p-6 gap-8 shadow-[0_0_40px_rgba(0,0,0,0.45)] border border-white/10 backdrop-blur-xl relative overflow-hidden">
           {/* HEADER */}
@@ -303,7 +344,7 @@ const HomePage = () => {
             {/* CONTENT AREA */}
             <div className="flex flex-col gap-3 items-center w-full h-full border-t border-white/5 rounded-b-3xl py-3 px-2 overflow-y-auto custom-scroll relative">
               <AnimatePresence>
-                {isLoading==="true" ? (
+                {isLoading === "true" ? (
                   <div className="flex flex-col items-center justify-center w-full h-full animate-pulse">
                     <div className="w-16 h-16 border-4 border-t-[#00F0FF] border-white/10 rounded-full animate-spin"></div>
                     <h2 className="mt-4 text-xl font-semibold text-white/80">
@@ -311,7 +352,7 @@ const HomePage = () => {
                     </h2>
                   </div>
                 ) : (
-                  activeTrackInfo===null &&
+                  activeTrackInfo === null &&
                   Array.isArray(tracks) &&
                   tracks.length > 0 &&
                   tracks.map((track, k) => (
@@ -359,10 +400,8 @@ const HomePage = () => {
                     </motion.div>
                   ))
                 )}
-
-                </AnimatePresence>
-                <AnimatePresence>
-
+              </AnimatePresence>
+              <AnimatePresence>
                 {/* TRACK DETAILS */}
                 {activeTrackInfo != null && (
                   <motion.div
@@ -372,9 +411,72 @@ const HomePage = () => {
                     className="w-full min-h-full rounded-2xl bg-linear-to-b from-[#16181b]/60 to-[#1f2327]/60 backdrop-blur-xl border border-white/6 shadow-xl overflow-hidden "
                   >
                     <div className="bg-[#23272b] w-full flex flex-col items-center py-6 border-b border-white/8">
-                      <h2 className="text-xl text-white font-semibold">
-                        {activeTrackInfo.title}
-                      </h2>
+                      <div className="flex justify-between items-center w-full px-6">
+                        <h2 className="text-xl text-white font-semibold">
+                          {activeTrackInfo.title}
+                        </h2>
+                        <div className="relative">
+                          <motion.button
+                            initial={{ opacity: 0, x: 40 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 40 }}
+                            transition={{ duration: 0.36, type: "spring" }}
+                            className="flex items-center justify-center text-[#00F0FF] hover:text-white font-semibold px-3 py-2  bg-transparent  cursor-pointer "
+                            aria-label="Open menu"
+                            onClick={() => setShowMenu((prev) => !prev)}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-7 w-7"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 7h16M4 12h16M4 17h16"
+                              />
+                            </svg>
+                          </motion.button>
+                          {showMenu && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.23 }}
+                              className="absolute right-0 mt-2 bg-[#222831] border border-white/10 rounded-lg shadow-lg z-50 flex flex-col "
+                            >
+                              <button
+                                onClick={() => {
+                                  setIsEdit(true);
+                                  settrackOldData({
+                                    name: activeTrackInfo.title,
+                                    category: activeTrackInfo.category,
+                                    id: activeTrackInfo._id,
+                                  });
+                                  return setShowMenu(false);
+                                }}
+                                className="px-4 py-2 hover:bg-[#31363b] text-left text-white w-full cursor-pointer"
+                                type="button"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleDeleteTrack(activeTrackInfo);
+                                  return setShowMenu(false);
+                                }}
+                                className="px-4 py-2 hover:bg-[#31363b] text-left text-red-400 w-full cursor-pointer"
+                                type="button"
+                              >
+                                Delete
+                              </button>
+                            </motion.div>
+                          )}
+                        </div>
+                      </div>
 
                       <motion.button
                         whileTap={{ scale: 0.94 }}
@@ -427,20 +529,21 @@ const HomePage = () => {
                     </div>
                   </motion.div>
                 )}
-                </AnimatePresence>
-                <AnimatePresence>
-
+              </AnimatePresence>
+              <AnimatePresence>
                 {/* DAILY REWARD SETUP */}
-                {!setupDailyReward && !setupDailyRewardBtn &&activeTrackInfo===null && (
-                  <button
-                    onClick={() => setSetupDailyRewardBtn(true)}
-                    className="w-[90%] py-3 text-lg font-semibold bg-linear-to-r from-[#00ADB5] to-[#00F0FF] text-[#0F1115] rounded-xl mt-3 shadow-lg hover:opacity-95 transition-all cursor-pointer"
-                  >
-                    Setup Daily Reward
-                  </button>
-                )}
+                {!setupDailyReward &&
+                  !setupDailyRewardBtn &&
+                  activeTrackInfo === null && (
+                    <button
+                      onClick={() => setSetupDailyRewardBtn(true)}
+                      className="w-[90%] py-3 text-lg font-semibold bg-linear-to-r from-[#00ADB5] to-[#00F0FF] text-[#0F1115] rounded-xl mt-3 shadow-lg hover:opacity-95 transition-all cursor-pointer"
+                    >
+                      Setup Daily Reward
+                    </button>
+                  )}
 
-                {setupDailyRewardBtn && activeTrackInfo===null && (
+                {setupDailyRewardBtn && activeTrackInfo === null && (
                   <div className="w-[90%] flex flex-col items-center gap-3 bg-[#16181b] border border-white/10 rounded-xl mt-4 px-6 py-6 shadow-lg">
                     <label
                       htmlFor="daily-reward-input"
@@ -490,7 +593,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
-        {/* laptop  */}
+      {/* laptop  */}
       <div className="hidden lg:flex  items-center justify-center h-screen bg-[#222831] text-white ">
         <div className=" hidden mt-18 w-[70%] h-[90%] bg-[#0F1115] lg:flex flex-col items-center rounded-lg px-6 ">
           {/* body */}
@@ -560,7 +663,7 @@ const HomePage = () => {
                       onDragStart={() => setIsDragging(true)}
                       onDragEnd={(e, info) => handleDragEnd(e, info, track)}
                       whileDrag={{ scale: 1.05, opacity: 0.9 }}
-                      className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-6 my-2 cursor-pointer hover:bg-gray-700 transition-all duration-200 hover:px-18"
+                      className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-6 my-2 cursor-pointer hover:bg-gray-700 transition-all duration-200 hover:px-18 relative group overflow-hidden"
                       onClick={() => {
                         // console.log("Active Track : ", track);
 
@@ -610,6 +713,37 @@ const HomePage = () => {
                       >
                         {track.answersCompleted ? "Completed" : "Incompleted"}
                       </h3>
+                      <button
+                        className="absolute -right-15 group-hover:right-0 top-1/2 -translate-y-1/2  bg-linear-to-r from-green-400 via-emerald-500 to-teal-600 shadow-[0_0_20px_rgba(239,68,68,0.6)]
+hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-semibold text-xs  transition-all duration-200 border rounded-r-lg border-[#ffd36944] focus:outline-none focus:ring-2 focus:ring-[#FFD369]/40 cursor-pointer"
+                        aria-label={`Edit track "${track.title}"`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: handle edit logic here, e.g., open edit modal
+
+                          setIsEdit(true);
+                          return settrackOldData({
+                            name: track.title,
+                            category: track.category,
+                            id: track._id,
+                          });
+                        }}
+                        type="button"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 20"
+                          width={16}
+                          height={16}
+                          className="inline-block  align-middle"
+                        >
+                          <path
+                            d="M13.586 3.586a2 2 0 0 1 2.828 2.828l-8.25 8.25-3.07.513a1 1 0 0 1-1.16-1.159l.513-3.07 8.25-8.25zm2.121-2.121a4 4 0 0 0-5.656 0l-8.25 8.25A3 3 0 0 0 1 13.415V17a1 1 0 0 0 1 1h3.586a3 3 0 0 0 2.122-.879l8.25-8.25a4 4 0 0 0 0-5.657zm-3.535 7.071l2.828-2.828-2.122-2.122-2.828 2.828 2.122 2.122z"
+                            fill="#FFD369"
+                          ></path>
+                        </svg>
+                      </button>
                     </motion.div>
                   ))
                 ) : (
@@ -1053,6 +1187,92 @@ const HomePage = () => {
           )}
         </div>
       </div>
+
+      {/* edit track */}
+      {isEdit && (
+        <AnimatePresence>
+          <motion.div
+            className="fixed inset-0 `z-[999]` bg-black/40 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-[#23272b] text-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-md flex flex-col items-center border-2 border-[#111418] relative"
+              initial={{ y: 40, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 40, opacity: 0, scale: 0.98 }}
+              transition={{ type: "spring", duration: 0.3 }}
+            >
+              <h2 className="text-xl font-bold text-[#FFD369] mb-3">
+                Edit Track
+              </h2>
+              <label
+                className="text-sm text-gray-300 w-full mb-1"
+                htmlFor="new-title-input"
+              >
+                New Track Title
+              </label>
+              <input
+                id="new-title-input"
+                type="text"
+                value={trackNewName === "" ? trackOldData.name : trackNewName}
+                onChange={(e) => setTrackNewName(e.target.value)}
+                placeholder={trackOldData.name}
+                className="w-full bg-[#1F242A] text-white px-3 py-2 rounded-lg mb-4 border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#00ADB5] transition"
+                autoFocus
+              />
+
+              <label
+                className="text-sm text-gray-300 w-full mb-1"
+                htmlFor="new-category-select"
+              >
+                New Category
+              </label>
+              <select
+                id="new-category-select"
+                className="w-full bg-[#222831] outline-none px-3 py-2 mt-4 rounded-lg cursor-pointer mb-4"
+                value={trackOldData.category}
+                onChange={(e) => setTrackNewCategory(e.target.value)}
+              >
+                <option value="" disabled>
+                  Select Category
+                </option>
+                <option value="Health">Health</option>
+                <option value="Work">Work</option>
+                <option value="Learning">Learning</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Social">Social</option>
+                <option value="Financial">Financial</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <div className="flex justify-between w-full mt-1 gap-2">
+                <button
+                  className="w-1/2 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all cursor-pointer"
+                  onClick={() => setIsEdit(false)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="w-1/2 py-2 bg-[#00ADB5] text-[#181C20] font-semibold rounded-lg hover:bg-[#06c4cc] transition-all cursor-pointer"
+                  type="button"
+                  onClick={() => {
+                    // Implement actual update logic here
+                    // E.g. call an API, update tracks, and then setIsEdit(false)
+                    handleEditTracks(trackOldData.id);
+                    return setIsEdit(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </>
   );
 };

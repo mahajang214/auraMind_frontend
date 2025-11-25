@@ -83,7 +83,7 @@ const QuestionSection = ({ gems, allQuestions }) => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -30 }}
           transition={{ duration: 0.5 }}
-          className="w-full lg:hidden bg-[#222831] text-white p-4 rounded-xl shadow-md"
+          className="w-full  bg-[#222831] text-white p-4 rounded-xl shadow-md"
         >
           <h2 className="font-medium mb-2">
             {currentIndex + 1}. {currentQuestion}
@@ -91,7 +91,7 @@ const QuestionSection = ({ gems, allQuestions }) => {
           <textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            className="w-full bg-[#393E46] text-[#EEEEEE] rounded-lg p-2 outline-none resize-none h-24 lg:h-84 focus:ring-2 focus:ring-[#00ADB5] transition"
+            className="w-full bg-[#393E46] lg:bg-[#101113] text-[#EEEEEE] rounded-lg p-2 outline-none resize-none h-24 lg:h-84 focus:ring-2 focus:ring-[#00ADB5] transition"
             placeholder="Write your answer here..."
           ></textarea>
         </motion.div>

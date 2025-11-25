@@ -3,6 +3,7 @@ import { FaPlay, FaPause, FaRedo, FaBell } from "react-icons/fa";
 import { showToast } from "../Utils/ToastService";
 import { AnimatePresence, motion } from "framer-motion";
 import { debugKey } from "../Debuger/DebugKeys";
+import alarmAudio from "../../../public/alarm-audio.mp3";
 
 const AlarmTimer = ({ cn, laptop = false }) => {
   const [time, setTime] = useState(0);
@@ -28,12 +29,19 @@ const AlarmTimer = ({ cn, laptop = false }) => {
       clearInterval(intervalRef.current);
       setIsRunning(false);
       setAlarmTriggered(true);
-      if (audioRef.current) audioRef.current.play();
-      //   alert("⏰ Time’s up!");
+  
+      // Play alarm safely
+      const audio = audioRef.current;
+      // console.log("audio : ",audioRef.current)
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(err => console.warn("Autoplay blocked:", err));
+      }
+  
       showToast("warning", "Time’s up!");
     }
     return () => clearInterval(intervalRef.current);
-  }, [isRunning, time]);
+  }, [time, isRunning]);
 
   const handleStart = () => {
     const seconds = parseInt(inputTime, 10) * 60;
@@ -75,6 +83,20 @@ const AlarmTimer = ({ cn, laptop = false }) => {
           disabled={isRunning}
           className="w-40 text-center text-lg bg-[#222831] text-white border border-[#00ADB5]/50 rounded-md p-2 focus:ring-2 focus:ring-[#00ADB5] outline-none"
         />
+        {/* default times */}
+        <div className="flex flex-wrap gap-3 w-full items-center  justify-center">
+          {[0, 5, 10, 15, 20, 25].map((min, k) => (
+            <button
+              key={debugKey(k, min, "ALL ALARM TIMER LIST")}
+              className="bg-[#393E46] hover:bg-[#222831] text-white px-3 py-1 rounded transition duration-500 active:scale-95 text-sm font-medium cursor-pointer border-transparent border  hover:border-gray-500 hover:-translate-y-1.5"
+              disabled={isRunning}
+              onClick={() => setInputTime(min)}
+              type="button"
+            >
+              {min} min
+            </button>
+          ))}
+        </div>
 
         <h2 className="text-4xl font-mono tracking-widest">
           {formatTime(time)}
@@ -103,12 +125,6 @@ const AlarmTimer = ({ cn, laptop = false }) => {
             <FaRedo /> Reset
           </button>
         </div>
-
-        {alarmTriggered && (
-          <p className="mt-4 text-[#ff5555] animate-pulse text-sm">
-            🔔 Time’s up! Take a deep breath.
-          </p>
-        )}
       </div>
 
       {/* laptop */}
@@ -130,9 +146,9 @@ const AlarmTimer = ({ cn, laptop = false }) => {
 
           {/* default times */}
           <div className="flex flex-wrap gap-2 mt-5">
-            {[0,5, 10, 15, 20, 25, 30].map((min,k) => (
+            {[0, 5, 10, 15, 20, 25, 30].map((min, k) => (
               <button
-              key={debugKey(k, min, "ALL ALARM TIMER LIST")}
+                key={debugKey(k, min, "ALL ALARM TIMER LIST")}
                 className="bg-[#393E46] hover:bg-[#222831] text-white px-3 py-1 rounded transition duration-500 active:scale-95 text-sm font-medium cursor-pointer border-transparent border  hover:border-gray-500 hover:-translate-y-1.5"
                 disabled={isRunning}
                 onMouseEnter={() => setInputTime(min)}
@@ -144,7 +160,6 @@ const AlarmTimer = ({ cn, laptop = false }) => {
           </div>
         </div>
 
-        
         <div className="flex flex-col items-center gap-2 bg-[#0F1115] px-2 py-6 rounded-2xl w-1/3 font-bold shadow-[0_0_20px_#00ADB522] transition-all duration-300">
           {!isRunning ? (
             <button
@@ -179,16 +194,28 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]"
         </div>
       </div>
       {alarmTriggered && (
-        <p className="mt-4 text-[#ff5555] animate-pulse text-lg cursor-default">
-          🔔 Time’s up! Take a breath.
-        </p>
+        <>
+          <p className="mt-4 text-[#ff5555] animate-pulse text-lg cursor-default">
+            🔔 Time’s up! Take a breath.
+          </p>
+
+          
+        </>
       )}
-      {/* Optional alarm sound */}
-      {/* <audio
-        ref={audioRef}
-        src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"
-        preload="auto"
-      /> */}
+      <audio
+            controls
+            src={alarmAudio}
+            ref={audioRef}
+            preload="auto"
+            playsInline
+            className="hidden"
+            style={{ width: 280 }}
+            onCanPlayThrough={(e) => {
+              try {
+                e.target.volume = 1.0;
+              } catch (err) {}
+            }}
+          />
     </div>
   );
 };

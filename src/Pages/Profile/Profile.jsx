@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { showToast } from "../../Components/Utils/ToastService";
 import LoadingScreen from "../../Components/Utils/LoadingScreen";
+import ShareSection from "../../Components/Share/ShareSection";
 
 function Profile() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ function Profile() {
   const token = localStorage.getItem("jwtToken");
   const [isLoading, setIsLoading] = useState(false);
   const baseUrl = import.meta.env.VITE_BACKEND_URL;
+  const [shareThis, setShareThis] = useState(false);
   // console.log("redux user:",reduxUser[0])
 
   const getEmail = async () => {
@@ -61,32 +63,32 @@ function Profile() {
 
             <AnimatePresence mode="wait">
               <div className="relative">
-              <motion.button
-                whileTap={{ scale: 0.85, rotate: 30 }}
-                whileHover={{ scale: 1.15, rotate: 15 }}
-                className="p-2 rounded-full bg-[#232831] hover:bg-[#32353c] focus:bg-[#2a2e35] border border-[#80808042] shadow transition-all cursor-pointer"
-                aria-label="Settings"
-                onClick={() => setShowSettings((prev) => !prev)}
-                type="button"
-              >
-                <svg
-                  version="1.1"
-                  id="Capa_1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  xmlnsXlink="http://www.w3.org/1999/xlink"
-                  x="0px"
-                  y="0px"
-                  width={32}
-                  height={32}
-                  viewBox="0 0 548.172 548.172"
-                  style={{ enableBackground: "new 0 0 548.172 548.172" }}
-                  xmlSpace="preserve"
+                <motion.button
+                  whileTap={{ scale: 0.85, rotate: 30 }}
+                  whileHover={{ scale: 1.15, rotate: 15 }}
+                  className="p-2 rounded-full bg-[#232831] hover:bg-[#32353c] focus:bg-[#2a2e35] border border-[#80808042] shadow transition-all cursor-pointer"
+                  aria-label="Settings"
+                  onClick={() => setShowSettings((prev) => !prev)}
+                  type="button"
                 >
-                  <g>
+                  <svg
+                    version="1.1"
+                    id="Capa_1"
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlnsXlink="http://www.w3.org/1999/xlink"
+                    x="0px"
+                    y="0px"
+                    width={32}
+                    height={32}
+                    viewBox="0 0 548.172 548.172"
+                    style={{ enableBackground: "new 0 0 548.172 548.172" }}
+                    xmlSpace="preserve"
+                  >
                     <g>
-                      {/* Main Gear Path */}
-                      <motion.path
-                        d="M333.186,376.438c0-1.902-0.668-3.806-1.999-5.708c-10.66-12.758-19.223-23.702-25.697-32.832
+                      <g>
+                        {/* Main Gear Path */}
+                        <motion.path
+                          d="M333.186,376.438c0-1.902-0.668-3.806-1.999-5.708c-10.66-12.758-19.223-23.702-25.697-32.832
                         c3.997-7.803,7.043-15.037,9.131-21.693l44.255-6.852c1.718-0.194,3.241-1.19,4.572-2.994c1.331-1.816,1.991-3.668,1.991-5.571
                         v-52.822c0-2.091-0.66-3.949-1.991-5.564s-2.95-2.618-4.853-2.993l-43.4-6.567c-2.098-6.473-5.331-14.281-9.708-23.413
                         c2.851-4.19,7.139-9.902,12.85-17.131c5.709-7.234,9.713-12.371,11.991-15.417c1.335-1.903,1.999-3.713,1.999-5.424
@@ -107,19 +109,25 @@ function Profile() {
                         c-20.179,0-37.406-7.139-51.678-21.408c-14.274-14.277-21.412-31.505-21.412-51.68c0-20.174,7.138-37.401,21.412-51.675
                         c14.272-14.275,31.5-21.411,51.678-21.411c20.174,0,37.401,7.135,51.673,21.411c14.277,14.274,21.413,31.501,21.413,51.675
                         C255.81,294.121,248.675,311.349,234.397,325.626z"
-                        fill="#FFD369"
-                        style={{ originX: "50%", originY: "50%" }}
-                        animate={showSettings ? { rotate: 360 } : { rotate: 0 }}
-                        transition={
-                          showSettings
-                            ? { repeat: Infinity, ease: "linear", duration: 1 }
-                            : { duration: 0.35 }
-                        }
-                      />
+                          fill="#FFD369"
+                          style={{ originX: "50%", originY: "50%" }}
+                          animate={
+                            showSettings ? { rotate: 360 } : { rotate: 0 }
+                          }
+                          transition={
+                            showSettings
+                              ? {
+                                  repeat: Infinity,
+                                  ease: "linear",
+                                  duration: 1,
+                                }
+                              : { duration: 0.35 }
+                          }
+                        />
 
-                      {/* Bottom Right Gear Cluster */}
-                      <motion.path
-                        d="M505.628,391.29c-2.471-5.517-5.329-10.465-8.562-14.846c9.709-21.512,14.558-34.646,14.558-39.402
+                        {/* Bottom Right Gear Cluster */}
+                        <motion.path
+                          d="M505.628,391.29c-2.471-5.517-5.329-10.465-8.562-14.846c9.709-21.512,14.558-34.646,14.558-39.402
                         c0-0.753-0.373-1.424-1.14-1.995c-22.846-13.322-34.643-19.985-35.405-19.985l-1.711,0.574
                         c-7.803,7.807-16.563,18.463-26.266,31.977c-3.805-0.379-6.656-0.574-8.559-0.574c-1.909,0-4.76,0.195-8.569,0.574
                         c-2.655-4-7.61-10.427-14.842-19.273c-7.23-8.846-11.611-13.277-13.134-13.277c-0.38,0-3.234,1.522-8.566,4.575
@@ -134,19 +142,25 @@ function Profile() {
                         c-7.128,7.139-15.745,10.715-25.834,10.715c-10.092,0-18.705-3.576-25.837-10.715c-7.139-7.139-10.712-15.748-10.712-25.837
                         c0-9.894,3.621-18.466,10.855-25.693c7.23-7.231,15.797-10.849,25.693-10.849c9.894,0,18.466,3.614,25.7,10.849
                         c7.228,7.228,10.849,15.8,10.849,25.693C475.078,430.214,471.512,438.823,464.37,445.962z"
-                        fill="#FFD369"
-                        style={{ originX: "50%", originY: "50%" }}
-                        animate={showSettings ? { rotate: 360 } : { rotate: 0 }}
-                        transition={
-                          showSettings
-                            ? { repeat: Infinity, ease: "linear", duration: 1 }
-                            : { duration: 0.35 }
-                        }
-                      />
+                          fill="#FFD369"
+                          style={{ originX: "50%", originY: "50%" }}
+                          animate={
+                            showSettings ? { rotate: 360 } : { rotate: 0 }
+                          }
+                          transition={
+                            showSettings
+                              ? {
+                                  repeat: Infinity,
+                                  ease: "linear",
+                                  duration: 1,
+                                }
+                              : { duration: 0.35 }
+                          }
+                        />
 
-                      {/* Top Right Gear Cluster */}
-                      <motion.path
-                        d="M505.628,98.931c-2.471-5.52-5.329-10.468-8.562-14.849c9.709-21.505,14.558-34.639,14.558-39.397
+                        {/* Top Right Gear Cluster */}
+                        <motion.path
+                          d="M505.628,98.931c-2.471-5.52-5.329-10.468-8.562-14.849c9.709-21.505,14.558-34.639,14.558-39.397
                         c0-0.758-0.373-1.427-1.14-1.999c-22.846-13.323-34.643-19.984-35.405-19.984l-1.711,0.57
                         c-7.803,7.808-16.563,18.464-26.266,31.977c-3.805-0.378-6.656-0.57-8.559-0.57c-1.909,0-4.76,0.192-8.569,0.57
                         c-2.655-3.997-7.61-10.42-14.842-19.27c-7.23-8.852-11.611-13.276-13.134-13.276c-0.38,0-3.234,1.521-8.566,4.569
@@ -161,277 +175,284 @@ function Profile() {
                         c-7.128,7.139-15.745,10.708-25.834,10.708c-10.092,0-18.705-3.569-25.837-10.708c-7.139-7.135-10.712-15.749-10.712-25.837
                         c0-9.897,3.621-18.464,10.855-25.697c7.23-7.233,15.797-10.85,25.693-10.85c9.894,0,18.466,3.621,25.7,10.85
                         c7.228,7.232,10.849,15.8,10.849,25.697C475.078,137.856,471.512,146.47,464.37,153.605z"
-                        fill="#FFD369"
-                        style={{ originX: "50%", originY: "50%" }}
-                        animate={showSettings ? { rotate: 360 } : { rotate: 0 }}
-                        transition={
-                          showSettings
-                            ? { repeat: Infinity, ease: "linear", duration: 1 }
-                            : { duration: 0.35 }
-                        }
-                      />
+                          fill="#FFD369"
+                          style={{ originX: "50%", originY: "50%" }}
+                          animate={
+                            showSettings ? { rotate: 360 } : { rotate: 0 }
+                          }
+                          transition={
+                            showSettings
+                              ? {
+                                  repeat: Infinity,
+                                  ease: "linear",
+                                  duration: 1,
+                                }
+                              : { duration: 0.35 }
+                          }
+                        />
+                      </g>
                     </g>
-                  </g>
-                </svg>
-              </motion.button>
-              {/* AnimatePresence settings dropdown/modal (demo) */}
+                  </svg>
+                </motion.button>
+                {/* AnimatePresence settings dropdown/modal (demo) */}
 
-              {showSettings && (
-                <motion.div
-                  key="settings"
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.17 }}
-                  className="absolute top-full right-0 z-30 mt-2 min-w-[170px] bg-[#232831] border border-[#42414a65] rounded-xl shadow-2xl p-3"
-                >
-                  <div className="flex flex-col gap-2">
-                    <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#FFD369] font-medium">
-                      Edit Profile
-                    </button>
-                    <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#eee] font-medium">
-                      Logout
-                    </button>
-                  </div>
-                </motion.div>
-              )}
+                {showSettings && (
+                  <motion.div
+                    key="settings"
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.17 }}
+                    className="absolute top-full right-0 z-30 mt-2 min-w-[170px] bg-[#232831] border border-[#42414a65] rounded-xl shadow-2xl p-3"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#FFD369] font-medium cursor-pointer">
+                        Edit Profile
+                      </button>
+                      <button  onClick={() => setShareThis(true)} className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#eee] font-medium cursor-pointer">
+                        Share
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             </AnimatePresence>
           </div>
-          
+
           {/* CONTENT AREA */}
-        <div className="flex flex-col gap-3 items-center w-full h-full border-t border-white/5 rounded-b-3xl  overflow-y-auto custom-scroll relative">
-          <AnimatePresence>
-            {/* playground */}
-            {!isLoading ? (
-              <div className="flex flex-col gap-8 items-center w-full h-full max-h-full border-t border-white/5 rounded-b-3xl p-4 sm:p-8 relative bg-linear-to-br from-[#23272f] via-[#232831] to-[#292c37] overflow-y-auto">
-                {/* user img email username */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    transition: { duration: 0.5 },
-                  }}
-                  className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8 w-full rounded-3xl bg-[#1a1e25] py-8 px-2 sm:py-10 sm:px-12 shadow-2xl border border-[#32363c]"
-                >
-                  {/* img */}
-                  <div className="flex justify-center items-center mb-4 sm:mb-0">
-                    <img
-                      src={
-                        reduxUser && reduxUser[0].profilePicture
-                          ? reduxUser[0].profilePicture
-                          : "/default-profile.png"
-                      }
-                      alt="Profile"
-                      className="rounded-full w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 object-cover shadow-[0_8px_32px_0_rgba(31,38,135,0.10)] ring-4 ring-[#FFD36990] transition-all duration-300 border-0"
-                      loading="lazy"
-                    />
-                  </div>
-                  {/* name email */}
-                  <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-2">
-                    <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold tracking-wide text-[#FFD369] drop-shadow-lg">{`${reduxUser[0].firstName} ${reduxUser[0].lastName}`}</h1>
-                    <h3 className="text-base xs:text-lg sm:text-2xl text-[#eeeeeead] font-light">
-                      {emailId}
-                    </h3>
-                  </div>
-                </motion.div>
-                {/* streak, gems, tracks */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    transition: { duration: 0.5 },
-                  }}
-                  className="flex flex-col xs:flex-row justify-center items-center gap-6 xs:gap-8 sm:gap-10 w-full mt-5 sm:mt-8 mb-4 sm:mb-6"
-                >
-                  {/* Streak */}
-                  <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#423c308c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-                    <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-                      <svg
-                        width={32}
-                        height={32}
-                        className="xs:w-9 xs:h-9"
-                        viewBox="0 0 75.371 75.368"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-label="Streak Icon"
-                      >
-                        <rect
-                          x="4.498"
-                          y="27.319"
-                          width="21.713"
-                          height="21.715"
-                          transform="matrix(0.707 -0.7072 0.7072 0.707 -22.5 22.0438)"
-                          fill="#FFD369"
-                        />
-                        <rect
-                          x="27.238"
-                          y="4.497"
-                          width="21.716"
-                          height="21.718"
-                          transform="matrix(0.7072 -0.707 0.707 0.7072 0.2973 31.4299)"
-                          fill="#FFD369"
-                        />
-                        <rect
-                          x="27.054"
-                          y="49.371"
-                          width="21.714"
-                          height="21.718"
-                          transform="matrix(0.7071 -0.7071 0.7071 0.7071 -31.4853 44.4482)"
-                          fill="#FFD369"
-                        />
-                        <rect
-                          x="49.385"
-                          y="27.043"
-                          width="21.716"
-                          height="21.719"
-                          transform="matrix(0.7071 -0.7071 0.7071 0.7071 -9.1567 53.6996)"
-                          fill="#FFD369"
-                        />
-                      </svg>
+          <div className="flex flex-col gap-3 items-center w-full h-full border-t border-white/5 rounded-b-3xl  overflow-y-auto custom-scroll relative">
+            <AnimatePresence>
+              {/* playground */}
+              {!isLoading ? (
+                <div className="flex flex-col gap-8 items-center w-full h-full max-h-full border-t border-white/5 rounded-b-3xl p-4 sm:p-8 relative bg-linear-to-br from-[#23272f] via-[#232831] to-[#292c37] overflow-y-auto">
+                  {/* user img email username */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      transition: { duration: 0.5 },
+                    }}
+                    className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8 w-full rounded-3xl bg-[#1a1e25] py-8 px-2 sm:py-10 sm:px-12 shadow-2xl border border-[#32363c]"
+                  >
+                    {/* img */}
+                    <div className="flex justify-center items-center mb-4 sm:mb-0">
+                      <img
+                        src={
+                          reduxUser && reduxUser[0].profilePicture
+                            ? reduxUser[0].profilePicture
+                            : "/default-profile.png"
+                        }
+                        alt="Profile"
+                        className="rounded-full w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 object-cover shadow-[0_8px_32px_0_rgba(31,38,135,0.10)] ring-4 ring-[#FFD36990] transition-all duration-300 border-0"
+                        loading="lazy"
+                      />
                     </div>
-                    <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-                      Streak
-                    </h2>
-                    <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#FFD369] tracking-wide">
-                     
-                     {reduxUser[0].streak[0]?.points?.toString().padStart(2, "0")}
-                    </span>
-                  </div>
-                  {/* Gems */}
-                  <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#184b76ad] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-                    <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-                      <svg
-                        width={32}
-                        height={32}
-                        className="xs:w-9 xs:h-9"
-                        viewBox="0 0 512 512"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-label="Streak Icon"
-                      >
-                        <polygon
-                          fill="#2B6AA6"
-                          points="200.12,367.3 152.92,461.48 49.82,255.97 144.27,255.97 "
-                        />
-                        <polygon
-                          fill="#1D5177"
-                          points="200.12,144.65 144.27,255.97 49.82,255.97 152.92,50.52 "
-                        />
-                        <polygon
-                          fill="#2B6AA6"
-                          points="367.68,255.97 311.83,367.3 256.03,367.3 256.03,144.65 311.83,144.65 "
-                        />
-                        <polygon
-                          fill="#1E8CF3"
-                          points="256.03,144.65 256.03,367.3 200.12,367.3 144.27,255.97 200.12,144.65 "
-                        />
-                        <polygon
-                          fill="#2B6AA6"
-                          points="256.03,50.52 256.03,144.65 200.12,144.65 152.92,50.52 "
-                        />
-                        <polygon
-                          fill="#1D5177"
-                          points="359.08,50.52 311.83,144.65 256.03,144.65 256.03,50.52 "
-                        />
-                        <polygon
-                          fill="#2B6AA6"
-                          points="256.03,367.3 256.03,461.48 152.92,461.48 200.12,367.3 "
-                        />
-                        <polygon
-                          fill="#1D5177"
-                          points="359.08,461.48 256.03,461.48 256.03,367.3 311.83,367.3 "
-                        />
-                        <polygon
-                          fill="#3B93E6"
-                          points="462.18,255.97 359.08,461.48 311.83,367.3 367.68,255.97 "
-                        />
-                        <polygon
-                          fill="#5BA5EA"
-                          points="462.18,255.97 367.68,255.97 311.83,144.65 359.08,50.52 "
-                        />
-                      </svg>
+                    {/* name email */}
+                    <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-2">
+                      <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold tracking-wide text-[#FFD369] drop-shadow-lg">{`${reduxUser[0].firstName} ${reduxUser[0].lastName}`}</h1>
+                      <h3 className="text-base xs:text-lg sm:text-2xl text-[#eeeeeead] font-light">
+                        {emailId}
+                      </h3>
                     </div>
-                    <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-                      Gems
-                    </h2>
-                    <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#62a9fa] tracking-wide">
-                      {reduxUser[0].gems?.toString().padStart(2, "0")}
-                    </span>
-                  </div>
-                  {/* Tracks */}
-                  <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#801eaf8c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-                    <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-                      <svg
-                        className="w-8 h-8 xs:w-9 xs:h-9"
-                        version="1.1"
-                        id="Layer_1"
-                        xmlns="http://www.w3.org/2000/svg"
-                        xmlnsXlink="http://www.w3.org/1999/xlink"
-                        viewBox="0 0 24 24"
-                        style={{ enableBackground: "new 0 0 24 24" }}
-                        xmlSpace="preserve"
-                      >
-                        <defs>
-                          <linearGradient
-                            id="SVGID_1_"
-                            gradientUnits="userSpaceOnUse"
-                            x1="2.3887"
-                            y1="11.6509"
-                            x2="22.2054"
-                            y2="11.6509"
-                          >
-                            <stop offset="0" stopColor="#1245C6"></stop>
-                            <stop offset="1" stopColor="#9909B7"></stop>
-                          </linearGradient>
-                        </defs>
-                        <path
-                          className="st0"
-                          d="M21.5,15.2H3.1c-0.2,0-0.4,0.1-0.5,0.2c-0.1,0.1-0.2,0.3-0.2,0.5v2.8c0,0.2,0.1,0.4,0.2,0.5
+                  </motion.div>
+                  {/* streak, gems, tracks */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      transition: { duration: 0.5 },
+                    }}
+                    className="flex flex-col xs:flex-row justify-center items-center gap-6 xs:gap-8 sm:gap-10 w-full mt-5 sm:mt-8 mb-4 sm:mb-6"
+                  >
+                    {/* Streak */}
+                    <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#423c308c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
+                      <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
+                        <svg
+                          width={32}
+                          height={32}
+                          className="xs:w-9 xs:h-9"
+                          viewBox="0 0 75.371 75.368"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-label="Streak Icon"
+                        >
+                          <rect
+                            x="4.498"
+                            y="27.319"
+                            width="21.713"
+                            height="21.715"
+                            transform="matrix(0.707 -0.7072 0.7072 0.707 -22.5 22.0438)"
+                            fill="#FFD369"
+                          />
+                          <rect
+                            x="27.238"
+                            y="4.497"
+                            width="21.716"
+                            height="21.718"
+                            transform="matrix(0.7072 -0.707 0.707 0.7072 0.2973 31.4299)"
+                            fill="#FFD369"
+                          />
+                          <rect
+                            x="27.054"
+                            y="49.371"
+                            width="21.714"
+                            height="21.718"
+                            transform="matrix(0.7071 -0.7071 0.7071 0.7071 -31.4853 44.4482)"
+                            fill="#FFD369"
+                          />
+                          <rect
+                            x="49.385"
+                            y="27.043"
+                            width="21.716"
+                            height="21.719"
+                            transform="matrix(0.7071 -0.7071 0.7071 0.7071 -9.1567 53.6996)"
+                            fill="#FFD369"
+                          />
+                        </svg>
+                      </div>
+                      <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
+                        Streak
+                      </h2>
+                      <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#FFD369] tracking-wide">
+                        {reduxUser[0].streak[0]?.points
+                          ?.toString()
+                          .padStart(2, "0")}
+                      </span>
+                    </div>
+                    {/* Gems */}
+                    <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#184b76ad] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
+                      <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
+                        <svg
+                          width={32}
+                          height={32}
+                          className="xs:w-9 xs:h-9"
+                          viewBox="0 0 512 512"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-label="Streak Icon"
+                        >
+                          <polygon
+                            fill="#2B6AA6"
+                            points="200.12,367.3 152.92,461.48 49.82,255.97 144.27,255.97 "
+                          />
+                          <polygon
+                            fill="#1D5177"
+                            points="200.12,144.65 144.27,255.97 49.82,255.97 152.92,50.52 "
+                          />
+                          <polygon
+                            fill="#2B6AA6"
+                            points="367.68,255.97 311.83,367.3 256.03,367.3 256.03,144.65 311.83,144.65 "
+                          />
+                          <polygon
+                            fill="#1E8CF3"
+                            points="256.03,144.65 256.03,367.3 200.12,367.3 144.27,255.97 200.12,144.65 "
+                          />
+                          <polygon
+                            fill="#2B6AA6"
+                            points="256.03,50.52 256.03,144.65 200.12,144.65 152.92,50.52 "
+                          />
+                          <polygon
+                            fill="#1D5177"
+                            points="359.08,50.52 311.83,144.65 256.03,144.65 256.03,50.52 "
+                          />
+                          <polygon
+                            fill="#2B6AA6"
+                            points="256.03,367.3 256.03,461.48 152.92,461.48 200.12,367.3 "
+                          />
+                          <polygon
+                            fill="#1D5177"
+                            points="359.08,461.48 256.03,461.48 256.03,367.3 311.83,367.3 "
+                          />
+                          <polygon
+                            fill="#3B93E6"
+                            points="462.18,255.97 359.08,461.48 311.83,367.3 367.68,255.97 "
+                          />
+                          <polygon
+                            fill="#5BA5EA"
+                            points="462.18,255.97 367.68,255.97 311.83,144.65 359.08,50.52 "
+                          />
+                        </svg>
+                      </div>
+                      <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
+                        Gems
+                      </h2>
+                      <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#62a9fa] tracking-wide">
+                        {reduxUser[0].gems?.toString().padStart(2, "0")}
+                      </span>
+                    </div>
+                    {/* Tracks */}
+                    <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#801eaf8c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
+                      <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
+                        <svg
+                          className="w-8 h-8 xs:w-9 xs:h-9"
+                          version="1.1"
+                          id="Layer_1"
+                          xmlns="http://www.w3.org/2000/svg"
+                          xmlnsXlink="http://www.w3.org/1999/xlink"
+                          viewBox="0 0 24 24"
+                          style={{ enableBackground: "new 0 0 24 24" }}
+                          xmlSpace="preserve"
+                        >
+                          <defs>
+                            <linearGradient
+                              id="SVGID_1_"
+                              gradientUnits="userSpaceOnUse"
+                              x1="2.3887"
+                              y1="11.6509"
+                              x2="22.2054"
+                              y2="11.6509"
+                            >
+                              <stop offset="0" stopColor="#1245C6"></stop>
+                              <stop offset="1" stopColor="#9909B7"></stop>
+                            </linearGradient>
+                          </defs>
+                          <path
+                            className="st0"
+                            d="M21.5,15.2H3.1c-0.2,0-0.4,0.1-0.5,0.2c-0.1,0.1-0.2,0.3-0.2,0.5v2.8c0,0.2,0.1,0.4,0.2,0.5
                       c0.1,0.1,0.3,0.2,0.5,0.2h18.4c0.2,0,0.4-0.1,0.5-0.2c0.1-0.1,0.2-0.3,0.2-0.5v-2.8c0-0.2-0.1-0.4-0.2-0.5
                       C21.9,15.3,21.7,15.2,21.5,15.2z M20.8,18h-7.1v-1.4h7.1L20.8,18L20.8,18z M21.5,9.5H3.1c-0.2,0-0.4,0.1-0.5,0.2
                       C2.5,9.9,2.4,10,2.4,10.2v2.8c0,0.2,0.1,0.4,0.2,0.5c0.1,0.1,0.3,0.2,0.5,0.2h18.4c0.2,0,0.4-0.1,0.5-0.2c0.1-0.1,0.2-0.3,0.2-0.5
                       v-2.8c0-0.2-0.1-0.4-0.2-0.5C21.9,9.6,21.7,9.5,21.5,9.5z M20.8,12.4H9.5v-1.4h11.3V12.4z M22,4.1c-0.1-0.1-0.3-0.2-0.5-0.2H3.1
                       c-0.2,0-0.4,0.1-0.5,0.2C2.5,4.2,2.4,4.4,2.4,4.6v2.8c0,0.2,0.1,0.4,0.2,0.5C2.7,8,2.9,8.1,3.1,8.1h18.4c0.2,0,0.4-0.1,0.5-0.2
                       c0.1-0.1,0.2-0.3,0.2-0.5V4.6C22.2,4.4,22.1,4.2,22,4.1z M20.8,6.7h-4.2V5.3h4.2V6.7z"
-                          fill="url(#SVGID_1_)"
-                        ></path>
-                      </svg>
+                            fill="url(#SVGID_1_)"
+                          ></path>
+                        </svg>
+                      </div>
+                      <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
+                        Tracks
+                      </h2>
+                      <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#bc5fee] tracking-wide">
+                        {tracksLength?.toString().padStart(2, "0")}
+                      </span>
                     </div>
-                    <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-                      Tracks
-                    </h2>
-                    <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#bc5fee] tracking-wide">
-                      {tracksLength?.toString().padStart(2, "0")}
-                    </span>
-                  </div>
-                </motion.div>
-                {/* daily reward section */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    transition: { duration: 0.5 },
-                  }}
-                  className="w-full px-2 sm:px-0 mt-6 sm:mt-8"
-                >
-                  <div className="bg-[#25304bce] border border-[#eeeeee29] rounded-2xl py-5 px-4 sm:py-7 sm:px-8 shadow-inner flex flex-col items-center gap-2 sm:gap-3 max-w-md sm:max-w-xl mx-auto">
-                    <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-[#FFD369] tracking-wide drop-shadow-sm">
-                      Daily Reward
-                    </h1>
-                    <p className="text-sm xs:text-base sm:text-lg text-[#eeeeeecc]">
-                      {reduxUser[0].dailyReward
-                        ? `${reduxUser[0].dailyReward}`
-                        : "Not created yet"}
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-            ) : (
-              <LoadingScreen />
-            )}
-          </AnimatePresence>
+                  </motion.div>
+                  {/* daily reward section */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      transition: { duration: 0.5 },
+                    }}
+                    className="w-full px-2 sm:px-0 mt-6 sm:mt-8"
+                  >
+                    <div className="bg-[#25304bce] border border-[#eeeeee29] rounded-2xl py-5 px-4 sm:py-7 sm:px-8 shadow-inner flex flex-col items-center gap-2 sm:gap-3 max-w-md sm:max-w-xl mx-auto">
+                      <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-[#FFD369] tracking-wide drop-shadow-sm">
+                        Daily Reward
+                      </h1>
+                      <p className="text-sm xs:text-base sm:text-lg text-[#eeeeeecc]">
+                        {reduxUser[0].dailyReward
+                          ? `${reduxUser[0].dailyReward}`
+                          : "Not created yet"}
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              ) : (
+                <LoadingScreen />
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -444,7 +465,7 @@ function Profile() {
               { label: "Tasks", path: "/self-reflection" },
               { label: "Progress", path: "/analytics" },
               { label: "Profile", path: "/profile" },
-            ].map((btn,key) => (
+            ].map((btn, key) => (
               <button
                 key={`${key}`}
                 onClick={() => navigate(btn.path)}
@@ -599,11 +620,14 @@ function Profile() {
                     className="absolute top-full right-0 z-20 mt-2 min-w-[170px] bg-[#232831] border border-[#42414a65] rounded-xl shadow-2xl p-3"
                   >
                     <div className="flex flex-col gap-2">
-                      <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#FFD369] font-medium">
+                      <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#FFD369] font-medium cursor-pointer">
                         Edit Profile
                       </button>
-                      <button className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#eee] font-medium">
-                        Logout
+                      <button
+                        onClick={() => setShareThis(true)}
+                        className="text-left px-3 py-1.5 rounded hover:bg-[#32363c] text-[#eee] font-medium cursor-pointer "
+                      >
+                        Share
                       </button>
                     </div>
                   </motion.div>
@@ -613,203 +637,6 @@ function Profile() {
           </div>
           {/* playground */}
           {!isLoading ? (
-            // <div className="flex flex-col gap-8 items-center w-full h-full max-h-full  rounded-2xl p-4 sm:p-8 relative bg-linear-to-br from-[#23272f] via-[#232831] to-[#292c37] overflow-y-auto">
-            //   {/* user img email username */}
-            //   <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8 w-full rounded-3xl bg-[#1a1e25] py-8 px-2 sm:py-10 sm:px-12 shadow-2xl border border-[#32363c]">
-            //     {/* img */}
-            //     <div className="flex justify-center items-center mb-4 sm:mb-0">
-            //       <img
-            //         src={
-            //           reduxUser && reduxUser[0].profilePicture
-            //             ? reduxUser[0].profilePicture
-            //             : "/default-profile.png"
-            //         }
-            //         alt="Profile"
-            //         className="rounded-full w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 object-cover shadow-[0_8px_32px_0_rgba(31,38,135,0.10)] ring-4 ring-[#FFD36990] transition-all duration-300 border-0"
-            //         loading="lazy"
-            //       />
-            //     </div>
-            //     {/* name email */}
-            //     <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-1.5 sm:gap-2">
-            //       <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold tracking-wide text-[#FFD369] drop-shadow-lg">{`${reduxUser[0].firstName} ${reduxUser[0].lastName}`}</h1>
-            //       <h3 className="text-base xs:text-lg sm:text-2xl text-[#eeeeeead] font-light">
-            //         {emailId}
-            //       </h3>
-            //     </div>
-            //   </div>
-            //   {/* streak, gems, tracks */}
-            //   <div className="flex flex-col xs:flex-row justify-center items-center gap-6 xs:gap-8 sm:gap-10 w-full mt-5 sm:mt-8 mb-4 sm:mb-6">
-            //     {/* Streak */}
-            //     <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#423c308c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-            //       <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-            //         <svg
-            //           width={32}
-            //           height={32}
-            //           className="xs:w-9 xs:h-9"
-            //           viewBox="0 0 75.371 75.368"
-            //           xmlns="http://www.w3.org/2000/svg"
-            //           aria-label="Streak Icon"
-            //         >
-            //           <rect
-            //             x="4.498"
-            //             y="27.319"
-            //             width="21.713"
-            //             height="21.715"
-            //             transform="matrix(0.707 -0.7072 0.7072 0.707 -22.5 22.0438)"
-            //             fill="#FFD369"
-            //           />
-            //           <rect
-            //             x="27.238"
-            //             y="4.497"
-            //             width="21.716"
-            //             height="21.718"
-            //             transform="matrix(0.7072 -0.707 0.707 0.7072 0.2973 31.4299)"
-            //             fill="#FFD369"
-            //           />
-            //           <rect
-            //             x="27.054"
-            //             y="49.371"
-            //             width="21.714"
-            //             height="21.718"
-            //             transform="matrix(0.7071 -0.7071 0.7071 0.7071 -31.4853 44.4482)"
-            //             fill="#FFD369"
-            //           />
-            //           <rect
-            //             x="49.385"
-            //             y="27.043"
-            //             width="21.716"
-            //             height="21.719"
-            //             transform="matrix(0.7071 -0.7071 0.7071 0.7071 -9.1567 53.6996)"
-            //             fill="#FFD369"
-            //           />
-            //         </svg>
-            //       </div>
-            //       <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-            //         Streak
-            //       </h2>
-            //       <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#FFD369] tracking-wide">
-            //         {reduxUser[0].streak?.toString().padStart(2, "0")}
-            //       </span>
-            //     </div>
-            //     {/* Gems */}
-            //     <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#184b76ad] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-            //       <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-            //         <svg
-            //           width={32}
-            //           height={32}
-            //           className="xs:w-9 xs:h-9"
-            //           viewBox="0 0 512 512"
-            //           xmlns="http://www.w3.org/2000/svg"
-            //           aria-label="Streak Icon"
-            //         >
-            //           <polygon
-            //             fill="#2B6AA6"
-            //             points="200.12,367.3 152.92,461.48 49.82,255.97 144.27,255.97 "
-            //           />
-            //           <polygon
-            //             fill="#1D5177"
-            //             points="200.12,144.65 144.27,255.97 49.82,255.97 152.92,50.52 "
-            //           />
-            //           <polygon
-            //             fill="#2B6AA6"
-            //             points="367.68,255.97 311.83,367.3 256.03,367.3 256.03,144.65 311.83,144.65 "
-            //           />
-            //           <polygon
-            //             fill="#1E8CF3"
-            //             points="256.03,144.65 256.03,367.3 200.12,367.3 144.27,255.97 200.12,144.65 "
-            //           />
-            //           <polygon
-            //             fill="#2B6AA6"
-            //             points="256.03,50.52 256.03,144.65 200.12,144.65 152.92,50.52 "
-            //           />
-            //           <polygon
-            //             fill="#1D5177"
-            //             points="359.08,50.52 311.83,144.65 256.03,144.65 256.03,50.52 "
-            //           />
-            //           <polygon
-            //             fill="#2B6AA6"
-            //             points="256.03,367.3 256.03,461.48 152.92,461.48 200.12,367.3 "
-            //           />
-            //           <polygon
-            //             fill="#1D5177"
-            //             points="359.08,461.48 256.03,461.48 256.03,367.3 311.83,367.3 "
-            //           />
-            //           <polygon
-            //             fill="#3B93E6"
-            //             points="462.18,255.97 359.08,461.48 311.83,367.3 367.68,255.97 "
-            //           />
-            //           <polygon
-            //             fill="#5BA5EA"
-            //             points="462.18,255.97 367.68,255.97 311.83,144.65 359.08,50.52 "
-            //           />
-            //         </svg>
-            //       </div>
-            //       <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-            //         Gems
-            //       </h2>
-            //       <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#62a9fa] tracking-wide">
-            //         {reduxUser[0].gems?.toString().padStart(2, "0")}
-            //       </span>
-            //     </div>
-            //     {/* Tracks */}
-            //     <div className="flex flex-col items-center px-4 py-4 xs:px-6 xs:py-5 sm:px-8 sm:py-6 rounded-2xl bg-[#181c22] shadow-xl border border-[#801eaf8c] min-w-[100px] xs:min-w-[120px] sm:min-w-[140px] w-full xs:w-auto">
-            //       <div className="flex items-center gap-2 xs:gap-3 mb-3 xs:mb-4">
-            //         <svg
-            //           className="w-8 h-8 xs:w-9 xs:h-9"
-            //           version="1.1"
-            //           id="Layer_1"
-            //           xmlns="http://www.w3.org/2000/svg"
-            //           xmlnsXlink="http://www.w3.org/1999/xlink"
-            //           viewBox="0 0 24 24"
-            //           style={{ enableBackground: "new 0 0 24 24" }}
-            //           xmlSpace="preserve"
-            //         >
-            //           <defs>
-            //             <linearGradient
-            //               id="SVGID_1_"
-            //               gradientUnits="userSpaceOnUse"
-            //               x1="2.3887"
-            //               y1="11.6509"
-            //               x2="22.2054"
-            //               y2="11.6509"
-            //             >
-            //               <stop offset="0" stopColor="#1245C6"></stop>
-            //               <stop offset="1" stopColor="#9909B7"></stop>
-            //             </linearGradient>
-            //           </defs>
-            //           <path
-            //             className="st0"
-            //             d="M21.5,15.2H3.1c-0.2,0-0.4,0.1-0.5,0.2c-0.1,0.1-0.2,0.3-0.2,0.5v2.8c0,0.2,0.1,0.4,0.2,0.5
-            //           c0.1,0.1,0.3,0.2,0.5,0.2h18.4c0.2,0,0.4-0.1,0.5-0.2c0.1-0.1,0.2-0.3,0.2-0.5v-2.8c0-0.2-0.1-0.4-0.2-0.5
-            //           C21.9,15.3,21.7,15.2,21.5,15.2z M20.8,18h-7.1v-1.4h7.1L20.8,18L20.8,18z M21.5,9.5H3.1c-0.2,0-0.4,0.1-0.5,0.2
-            //           C2.5,9.9,2.4,10,2.4,10.2v2.8c0,0.2,0.1,0.4,0.2,0.5c0.1,0.1,0.3,0.2,0.5,0.2h18.4c0.2,0,0.4-0.1,0.5-0.2c0.1-0.1,0.2-0.3,0.2-0.5
-            //           v-2.8c0-0.2-0.1-0.4-0.2-0.5C21.9,9.6,21.7,9.5,21.5,9.5z M20.8,12.4H9.5v-1.4h11.3V12.4z M22,4.1c-0.1-0.1-0.3-0.2-0.5-0.2H3.1
-            //           c-0.2,0-0.4,0.1-0.5,0.2C2.5,4.2,2.4,4.4,2.4,4.6v2.8c0,0.2,0.1,0.4,0.2,0.5C2.7,8,2.9,8.1,3.1,8.1h18.4c0.2,0,0.4-0.1,0.5-0.2
-            //           c0.1-0.1,0.2-0.3,0.2-0.5V4.6C22.2,4.4,22.1,4.2,22,4.1z M20.8,6.7h-4.2V5.3h4.2V6.7z"
-            //             fill="url(#SVGID_1_)"
-            //           ></path>
-            //         </svg>
-            //       </div>
-            //       <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-[#eeeeee]">
-            //         Tracks
-            //       </h2>
-            //       <span className="mt-1 xs:mt-2 text-2xl xs:text-3xl font-bold text-[#bc5fee] tracking-wide">
-            //         {tracksLength?.toString().padStart(2, "0")}
-            //       </span>
-            //     </div>
-            //   </div>
-            //   {/* daily reward section */}
-            //   <div className="w-full px-2 sm:px-0 mt-6 sm:mt-8">
-            //     <div className="bg-[#25304bce] border border-[#eeeeee29] rounded-2xl py-5 px-4 sm:py-7 sm:px-8 shadow-inner flex flex-col items-center gap-2 sm:gap-3 max-w-md sm:max-w-xl mx-auto">
-            //       <h1 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-[#FFD369] tracking-wide drop-shadow-sm">
-            //         Daily Reward
-            //       </h1>
-            //       <p className="text-sm xs:text-base sm:text-lg text-[#eeeeeecc]">
-            //         {!reduxUser[0].dailyReward && "Not created yet"}
-            //       </p>
-            //     </div>
-            //   </div>
-            // </div>
             <div
               className="
     flex  gap-10 items-center 
@@ -906,7 +733,9 @@ function Profile() {
                       Streak
                     </h2>
                     <span className="mt-2 text-3xl sm:text-4xl font-bold text-[#FFD369] tracking-wide">
-                   { reduxUser[0].streak[0]?.points?.toString().padStart(2, "0")}
+                      {reduxUser[0].streak[0]?.points
+                        ?.toString()
+                        .padStart(2, "0")}
                     </span>
                   </div>
 
@@ -995,6 +824,20 @@ function Profile() {
           )}
         </div>
       </div>
+
+      {shareThis && (
+            <AnimatePresence>
+              <ShareSection
+                onClose={() => setShareThis(false)}
+                data={{
+                  name: `${reduxUser[0].firstName} ${reduxUser[0].lastName}`,
+                  streak : reduxUser[0].streak[0]?.points?.toString().padStart(2, "0"),
+                  gems : reduxUser[0].gems?.toString().padStart(2, "0"),tracks : tracksLength?.toString().padStart(2, "0")
+                }}
+              />
+            </AnimatePresence>
+          
+          )}
     </div>
   );
 }
