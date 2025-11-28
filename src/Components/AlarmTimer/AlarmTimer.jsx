@@ -21,18 +21,13 @@ const AlarmTimer = ({ cn, laptop = false }) => {
 
   useEffect(() => {
     if (isRunning && time > 0) {
-      intervalRef.current = setInterval(
-        () => setTime((prev) => prev - 1),
-        1000
-      );
+      intervalRef.current = setInterval(() => setTime(prev => prev - 1), 1000);
     } else if (time === 0 && isRunning) {
       clearInterval(intervalRef.current);
       setIsRunning(false);
       setAlarmTriggered(true);
   
-      // Play alarm safely
       const audio = audioRef.current;
-      // console.log("audio : ",audioRef.current)
       if (audio) {
         audio.currentTime = 0;
         audio.play().catch(err => console.warn("Autoplay blocked:", err));
@@ -40,8 +35,10 @@ const AlarmTimer = ({ cn, laptop = false }) => {
   
       showToast("warning", "Time’s up!");
     }
+  
     return () => clearInterval(intervalRef.current);
   }, [time, isRunning]);
+  
 
   const handleStart = () => {
     const seconds = parseInt(inputTime, 10) * 60;

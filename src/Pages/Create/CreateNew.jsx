@@ -32,7 +32,7 @@ function CreateNew() {
   const [hours, setHours] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [intervalId, setIntervalId] = useState(null);
-  const [duration, setDuration] = useState({});
+  const [duration, setDuration] = useState({hr:0,min:0,sec:0});
 
   const startTimer = () => {
     if (!isRunning) {
@@ -78,13 +78,21 @@ function CreateNew() {
 
   const handleSaveNewTask = async () => {
     try {
+      console.log("name : ",titleName)
+      console.log("category : ", titleCategory)
+      console.log("duration : ",duration)
       setLoading(true);
       const res = await axios.post(
         `${baseUrl}/api/features/add-new-track`,
         {
           title: titleName,
           category: titleCategory,
-          duration: duration || { hr: "00", min: "00", sec: "00" },
+          duration: (!duration || { hr: 0, min: 0, sec: 0 }) ,
+          max_duration: {
+            hr: maxDurationHr ,
+            min: maxDurationMin ,
+            sec: maxDurationSec ,
+          },
         },
         {
           headers: {
@@ -165,6 +173,11 @@ function CreateNew() {
       showToast("error", "Error: something went wrong");
     }
   };
+
+  // max duration
+  const [maxDurationHr, setMaxDurationHr] = useState(0);
+  const [maxDurationMin, setMaxDurationMin] = useState(30);
+  const [maxDurationSec, setMaxDurationSec] = useState(0);
 
   return (
     <div className="flex  items-center justify-center h-screen bg-[#222831] text-white ">
@@ -553,7 +566,7 @@ function CreateNew() {
               { label: "Tasks", path: "/self-reflection" },
               { label: "Progress", path: "/analytics" },
               { label: "Profile", path: "/profile" },
-            ].map((btn,key) => (
+            ].map((btn, key) => (
               <button
                 key={`${key}`}
                 onClick={() => navigate(btn.path)}
@@ -918,12 +931,14 @@ function CreateNew() {
                 <LoadingScreen />
               ) : (
                 <div className="w-full h-full py-2">
+                  {/* new title name */}
                   <input
                     className="w-full bg-[#222831] outline-none px-6 py-2 rounded-lg cursor-text"
                     type="text"
                     placeholder="Enter New Track Title"
                     onChange={(e) => setTitleName(e.target.value)}
                   />
+                  {/* category selection */}
                   <select
                     className="w-full bg-[#222831] outline-none px-3 py-2 mt-4 rounded-lg cursor-pointer"
                     onChange={(e) => setTitleCategory(e.target.value)}
@@ -941,6 +956,47 @@ function CreateNew() {
                     <option value="Entertainment">Entertainment</option>
                     <option value="Other">Other</option>
                   </select>
+
+                  {/* max duration setup */}
+                  <div className="flex flex-wrap gap-3 mt-4 mb-4 items-center">
+                    <label className="text-white/70 text-sm font-semibold">
+                      Max Duration:
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="23"
+                      placeholder="hr"
+                      value={maxDurationHr}
+                      onChange={(e) => setMaxDurationHr(Number(e.target.value))}
+                      className="w-20 bg-[#222831] text-white rounded-lg px-3 py-2 border border-white/20 text-center shadow-inner outline-none"
+                    />
+                    <span className="text-white/50">hr</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="min"
+                      value={maxDurationMin}
+                      onChange={(e) =>
+                        setMaxDurationMin(Number(e.target.value))
+                      }
+                      className="w-20 bg-[#222831] text-white rounded-lg px-3 py-2 border border-white/20 text-center shadow-inner outline-none"
+                    />
+                    <span className="text-white/50">min</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="sec"
+                      value={maxDurationSec}
+                      onChange={(e) =>
+                        setMaxDurationSec(Number(e.target.value))
+                      }
+                      className="w-20 bg-[#222831] text-white rounded-lg px-3 py-2 border border-white/20 text-center shadow-inner outline-none"
+                    />
+                    <span className="text-white/50">sec</span>
+                  </div>
 
                   {/* Timer Section */}
                   <div className="mt-6 flex flex-col items-center bg-[#222831] text-white p-6 rounded-2xl shadow-lg">
@@ -1016,7 +1072,6 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]"
                         duration?.min > 0 ||
                         duration?.sec > 0) && (
                         <motion.button
-                         
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{
                             opacity: 1,
@@ -1089,9 +1144,8 @@ overflow-hidden group transition-all duration-500 ease-in-out"
                     <AnimatePresence mode="wait">
                       {isRunning === false &&
                         duration &&
-                        Object.keys(duration).length === 0 && (
+                        Object.keys(duration).length >= 0 && (
                           <motion.button
-                            
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{
                               opacity: 1,
@@ -1105,13 +1159,13 @@ overflow-hidden group transition-all duration-500 ease-in-out"
                             }}
                             whileTap={{ scale: 0.97 }}
                             onClick={() => {
+                              handleSaveNewTask();
+                              if (intervalId) clearInterval(intervalId);
                               setSeconds(0);
                               setMinutes(0);
                               setHours(0);
                               setDuration({});
                               setIsRunning(false);
-                              if (intervalId) clearInterval(intervalId);
-                              handleSaveNewTask();
                             }}
                             className="relative w-1/2 mt-6 py-2.5 rounded-lg text-lg font-semibold text-white tracking-wide cursor-pointer
       bg-linear-to-r from-[#00ADB5] to-[#00BCD4]
@@ -1195,7 +1249,6 @@ overflow-hidden group transition-all duration-500 ease-in-out"
                   <div className="flex justify-center items-center w-full">
                     <AnimatePresence mode="wait">
                       <motion.button
-                        
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{
                           opacity: 1,
@@ -1290,7 +1343,6 @@ overflow-hidden group transition-all duration-500 ease-in-out"
                   <div className="flex justify-center items-center w-full">
                     <AnimatePresence mode="wait">
                       <motion.button
-                       
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{
                           opacity: 1,

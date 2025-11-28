@@ -8,6 +8,7 @@ import QuestionSection from "../../Components/Utils/QuestionSection.jsx";
 import { FaArrowRight, FaArrowLeft, FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { debugKey } from "../../Components/Debuger/DebugKeys.js";
+import FiveTwentyFiveRule from "../../Components/5-25Rule/FiveTwentyFiveRule.jsx";
 function SelfReflextion() {
   const navigate = useNavigate();
   const reduxUser = useSelector((state) => state.user.user);
@@ -41,9 +42,9 @@ function SelfReflextion() {
 
       // console.log("Number of habits:", response.data.data[0].habits);
 
-      setHabits(response.data.data[0].habits.length);
+      setHabits(response.data.data.habits.length);
       setAllHabits(response.data.data);
-      // console.log("length : ",response.data.data[0].habits.length)
+      // console.log("length : ",response.data.data.habits)
 
       setIsLoading(false);
     } catch (error) {
@@ -60,11 +61,9 @@ function SelfReflextion() {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Count all properties if response.data.data is an object
-      const passionsCount = response.data.data
-        ? Object.keys(response.data.data).length
-        : 0;
-      // console.log("Number of passions:", passionsCount);
-      setPassions(passionsCount );
+
+      // console.log("Number of passions:", response.data.data.passions.length);
+      setPassions(response.data.data.passions.length);
       setAllPassions(response.data.data);
       setIsLoading(false);
     } catch (error) {
@@ -76,6 +75,7 @@ function SelfReflextion() {
   // console.log("redux user: ",reduxUser)
   const getIkigai = async () => {
     try {
+      setIsLoading(true);
       const res = await axios.get(`${baseUrl}/api/features/get-ikigai`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -90,7 +90,10 @@ function SelfReflextion() {
         mission: data.data.mission,
         vocation: data.data.vocation,
       });
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
+      console.log("Ikigai Error : ", error.message);
       return;
     }
   };
@@ -98,8 +101,8 @@ function SelfReflextion() {
   useEffect(() => {
     getAllHabits();
     getAllPassions();
-    setGems(reduxUser[0].gems);
     getIkigai();
+    setGems(reduxUser[0].gems);
     // console.log("gems",reduxUser[0].gems)
   }, []);
 
@@ -183,7 +186,7 @@ function SelfReflextion() {
   const itemsPerPage = 3;
 
   const next = () => {
-    if (index + itemsPerPage < allHabits[0].habits.length) {
+    if (index + itemsPerPage < allHabits.habits.length) {
       setIndex(index + itemsPerPage);
     }
   };
@@ -251,6 +254,7 @@ function SelfReflextion() {
       return;
     } else {
       try {
+        setIsLoading(true);
         // Replace the URL with your actual API endpoint
         await axios.patch(`${baseUrl}/api/features/update-ikigai`, ikigai, {
           headers: {
@@ -258,15 +262,16 @@ function SelfReflextion() {
           },
         });
         showToast("success", "Successfully saved.");
+        setIsLoading(false);
         // Optionally: show a notification or update UI
       } catch (error) {
         // Handle the error gracefully, e.g., show error message
+        setIsLoading(false);
         console.error("Failed to save ikigai", error);
         showToast("error", "Failed to save");
       }
     }
   };
-
   return (
     <div className="flex  items-center justify-center h-screen bg-[#222831] text-white ">
       {/* mobile responsive design */}
@@ -283,7 +288,7 @@ function SelfReflextion() {
               Self-Reflection {whatToDo && `->${whatToDo}`}
             </h1>
 
-            <AnimatePresence >
+            <AnimatePresence>
               {whatToDo && (
                 <motion.button
                   initial={{ opacity: 0, x: 40 }}
@@ -316,13 +321,15 @@ function SelfReflextion() {
 
           {!whatToDo && (
             <div className="flex flex-col gap-2 items-center w-full h-full  bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl p-2 relative scroll-auto">
-              {!habits && !passions ? (
-                <LoadingScreen />
+             
+              {habits === null && passions === null ? (
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
               ) : (
                 <AnimatePresence>
                   {/* habits */}
                   <motion.button
-                   
                     className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-3 my-1 cursor-pointer"
                     onClick={() => setWhatToDo("habits")}
                     initial={{ opacity: 0, y: 20 }}
@@ -341,7 +348,6 @@ function SelfReflextion() {
                   </motion.button>
 
                   <motion.button
-                   
                     className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-3 my-1 cursor-pointer"
                     onClick={() => setWhatToDo("passions")}
                     initial={{ opacity: 0, y: 20 }}
@@ -365,7 +371,6 @@ function SelfReflextion() {
                   </motion.button>
 
                   <motion.button
-                   
                     className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-3 my-1 cursor-pointer"
                     onClick={() => setWhatToDo("whoAmI")}
                     initial={{ opacity: 0, y: 20 }}
@@ -385,7 +390,6 @@ function SelfReflextion() {
 
                   {/* ikigai */}
                   <motion.button
-                    
                     className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-3 my-1 cursor-pointer"
                     onClick={() => setWhatToDo("ikigai")}
                     initial={{ opacity: 0, y: 20 }}
@@ -402,6 +406,25 @@ function SelfReflextion() {
                   >
                     <h2 className="text-sm font-medium">Ikigai</h2>
                   </motion.button>
+
+                  {/* 5/25 */}
+                  <motion.button
+                    className="w-full h-12 bg-[#222831] rounded-lg text-white flex justify-between items-center px-3 my-1 cursor-pointer"
+                    onClick={() => setWhatToDo("5/25")}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: 0.14,
+                    }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <h2 className="text-sm font-medium">5/25 Rule</h2>
+                  </motion.button>
                 </AnimatePresence>
               )}
             </div>
@@ -409,14 +432,20 @@ function SelfReflextion() {
           <AnimatePresence>
             {whatToDo === "habits" ? (
               isLoading ? (
-                <LoadingScreen />
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
               ) : (
                 <div className="flex flex-col gap-2 items-center w-full h-full bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl rounded-b-2xl p-2 relative scroll-auto">
-                  {allHabits[0].habits.length > 0 ? (
-                    allHabits[0].habits.map((item,key) => {
+                  {allHabits.habits.length > 0 ? (
+                    allHabits.habits.map((item, key) => {
                       return (
                         <div
-                        key={debugKey(`mob-${item._id}`, item, "ALL HABITS LIST")}
+                          key={debugKey(
+                            `mob-${item._id}`,
+                            item,
+                            "ALL HABITS LIST"
+                          )}
                           className="w-full min-h-12 bg-[#222831] rounded-lg text-white flex flex-col items-left px-4 my-2 cursor-pointer  transition-all duration-200 touch-manipulation"
                           style={{
                             fontSize: "1.1rem",
@@ -469,15 +498,21 @@ function SelfReflextion() {
               )
             ) : whatToDo === "passions" ? (
               isLoading ? (
-                <LoadingScreen />
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
               ) : (
                 <>
                   <div className="flex flex-col gap-2 items-center w-full h-full bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl p-2 relative scroll-auto">
                     {allPassions.passions.length > 0 ? (
-                      allPassions.passions.map((item,key1) => {
+                      allPassions.passions.map((item, key1) => {
                         return (
                           <div
-                          key={debugKey(`mob-${item._id}`, item, "ALL PASSIONS LIST")}
+                            key={debugKey(
+                              `mob-${item._id}`,
+                              item,
+                              "ALL PASSIONS LIST"
+                            )}
                             className="w-full min-h-12 bg-[#222831] rounded-lg text-white flex flex-col items-left px-4 my-2 cursor-pointer  transition-all duration-200 touch-manipulation"
                             style={{
                               fontSize: "1.1rem",
@@ -520,7 +555,9 @@ function SelfReflextion() {
               )
             ) : whatToDo === "whoAmI" ? (
               isLoading ? (
-                <LoadingScreen />
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
               ) : (
                 <div className="flex flex-col gap-2 items-center w-full h-full bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl rounded-b-2xl p-2 relative scroll-auto">
                   <QuestionSection gems={gems} allQuestions={allQuestions} />
@@ -528,11 +565,13 @@ function SelfReflextion() {
               )
             ) : whatToDo === "ikigai" ? (
               isLoading ? (
-                <LoadingScreen />
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
               ) : (
                 <>
                   <div className="overflow-y-auto  h-full w-full  bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl">
-                    <AnimatePresence >
+                    <AnimatePresence>
                       {/* input ikigai */}
                       {!showIkigaiPic && (
                         <motion.div
@@ -631,8 +670,6 @@ function SelfReflextion() {
                               placeholder="Write your answer..."
                               className="w-full h-28 p-3 rounded-md border border-gray-300 bg-transparent text-gray-800 resize-none outline-none"
                             />
-
-                           
                           </motion.div>
                           <button
                             className="w-full mt-4 py-3 bg-linear-to-r from-green-400 via-emerald-400 to-teal-400 text-gray-900 font-bold rounded-xl shadow-xl hover:from-green-500 hover:via-emerald-500 hover:to-teal-500 hover:text-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
@@ -645,22 +682,31 @@ function SelfReflextion() {
                               strokeWidth="2"
                               viewBox="0 0 24 24"
                             >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
-                            Save Ikigai 
+                            Save Ikigai
                           </button>
 
                           {/* IKIGAI BUTTON */}
                           <motion.button
-                            whileHover={{ scale: 1.035, backgroundColor: "#bbf7d0" }}
-                            whileTap={{ scale: 0.97, backgroundColor: "#6ee7b7" }}
+                            whileHover={{
+                              scale: 1.035,
+                              backgroundColor: "#bbf7d0",
+                            }}
+                            whileTap={{
+                              scale: 0.97,
+                              backgroundColor: "#6ee7b7",
+                            }}
                             className="w-full max-w-xs py-3 mt-4 rounded-xl text-2xl font-bold bg-[#34d399] text-white shadow-lg duration-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
                             onClick={() => setShowIkigaiPic(true)}
                             aria-label="Show Ikigai Info"
                           >
                             Know IKIGAI
                           </motion.button>
-                           
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -707,6 +753,16 @@ function SelfReflextion() {
                   </div>
                 </>
               )
+            ) : whatToDo === "5/25" ? (
+              isLoading ? (
+                <div className="w-full h-full">
+                  <LoadingScreen />
+                </div>
+              ) : (
+                <div className="overflow-y-auto  h-full w-full  bg-[#211E28]/40 border border-white/6 rounded-3xl shadow-inner overflow-hidden backdrop-blur-xl">
+                  <FiveTwentyFiveRule />
+                </div>
+              )
             ) : null}
           </AnimatePresence>
         </div>
@@ -720,9 +776,9 @@ function SelfReflextion() {
               { label: "Tasks", path: "/self-reflection" },
               { label: "Progress", path: "/analytics" },
               { label: "Profile", path: "/profile" },
-            ].map((btn,key2) => (
+            ].map((btn, key2) => (
               <button
-              key={`${key2}`}
+                key={`${key2}`}
                 onClick={() => navigate(btn.path)}
                 className="flex flex-col justify-center items-center h-full w-full rounded-xl hover:bg-white/5 transition-all text-white/80 cursor-pointer"
               >
@@ -749,7 +805,7 @@ function SelfReflextion() {
               `-> ${whatToDo.charAt(0).toUpperCase() + whatToDo.slice(1)}`}
           </h2>
 
-          <AnimatePresence >
+          <AnimatePresence>
             {whatToDo && (
               <motion.button
                 initial={{ opacity: 0, x: 40 }}
@@ -782,7 +838,7 @@ function SelfReflextion() {
         {!whatToDo && (
           <div className="w-full h-full flex flex-col items-center">
             <div className="flex justify-between items-center w-full h-1/2 ">
-              <AnimatePresence >
+              <AnimatePresence>
                 <motion.button
                   initial={{ opacity: 0, y: 40, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -820,7 +876,7 @@ function SelfReflextion() {
                   </motion.h1>
                 </motion.button>
               </AnimatePresence>
-              <AnimatePresence >
+              <AnimatePresence>
                 <motion.button
                   initial={{ opacity: 0, y: 40, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -859,7 +915,7 @@ function SelfReflextion() {
                 </motion.button>
               </AnimatePresence>
             </div>
-            <AnimatePresence >
+            <AnimatePresence>
               {/* who am i btn */}
               <motion.button
                 initial={{ opacity: 0, y: 40, scale: 0.96 }}
@@ -900,7 +956,33 @@ function SelfReflextion() {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => setWhatToDo("ikigai")}
-                className="w-full my-1 max-w-sm bg-[#222831] border border-[#393E46] rounded-b-xl hover:rounded-xl  shadow-lg p-6 flex flex-col items-start transition-all duration-500 cursor-pointer focus:outline-none active:scale-[.98]"
+                className=" my-1 max-w-sm bg-[#222831] border border-[#393E46] rounded-xl hover:rounded-xl  shadow-lg px-35 py-6 flex flex-col items-start transition-all duration-500 cursor-pointer focus:outline-none active:scale-[.98] "
+                aria-label="Card Button"
+              >
+                <motion.h3
+                  className="text-2xl font-semibold text-center w-full "
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Ikigai
+                </motion.h3>
+              </motion.button>
+              {/* 5/25 */}
+              <motion.button
+                initial={{ opacity: 0, y: 40, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, type: "spring", stiffness: 80 }}
+                whileHover={{
+                  scale: 1.04,
+                  boxShadow:
+                    "0 0 24px 4px #00ADB5, 0 6px 32px rgba(0,173,181,0.15)",
+                  borderColor: "#00ADB5",
+                }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => setWhatToDo("5/25")}
+                className="w-full  max-w-sm bg-[#222831] border border-[#393E46] rounded-b-xl hover:rounded-xl  shadow-lg p-6 flex flex-col items-start transition-all duration-500 cursor-pointer focus:outline-none active:scale-[.98]"
                 aria-label="Card Button"
               >
                 <motion.h3
@@ -909,7 +991,7 @@ function SelfReflextion() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  Ikigai
+                  5/25 Rule
                 </motion.h3>
               </motion.button>
             </AnimatePresence>
@@ -925,15 +1007,19 @@ function SelfReflextion() {
               <div className="flex flex-col gap-4 w-full  rounded-b-2xl p-4 overflow-hidden">
                 {allHabits &&
                 allHabits.length > 0 &&
-                allHabits[0].habits &&
-                allHabits[0].habits.length > 0 ? (
+                allHabits.habits &&
+                allHabits.habits.length > 0 ? (
                   <div className="relative w-full h-auto  flex justify-between  py-10 items-center">
-                    <AnimatePresence  custom={directionP}>
-                      {allHabits[0].habits
+                    <AnimatePresence custom={directionP}>
+                      {allHabits.habits
                         .slice(index, index + itemsPerPage)
-                        .map((item,key3) => (
+                        .map((item, key3) => (
                           <motion.div
-                          key={debugKey(`lap-${item._id}`, item, "ALL HABITS LIST LAPTOP")}
+                            key={debugKey(
+                              `lap-${item._id}`,
+                              item,
+                              "ALL HABITS LIST LAPTOP"
+                            )}
                             custom={directionP}
                             variants={slideVariants}
                             initial="enter"
@@ -1007,7 +1093,7 @@ function SelfReflextion() {
                 {/* Next */}
                 <button
                   onClick={next}
-                  disabled={index + itemsPerPage >= allHabits[0].habits.length}
+                  disabled={index + itemsPerPage >= allHabits.habits.length}
                   className="px-4 py-2 bg-cyan-600 text-white rounded-md flex items-center gap-2
                             hover:bg-cyan-500 transition disabled:opacity-40 cursor-pointer"
                 >
@@ -1023,12 +1109,16 @@ function SelfReflextion() {
             <div className="flex flex-col gap-4 w-full h-full  rounded-b-2xl p-4 overflow-hidden">
               {passionsP.length > 0 ? (
                 <div className="relative w-full py-10 h-auto  flex justify-center  gap-3 items-center">
-                  <AnimatePresence custom={directionP} >
+                  <AnimatePresence custom={directionP}>
                     {passionsP
                       .slice(indexP, indexP + itemsPerPageP)
-                      .map((item,key4) => (
+                      .map((item, key4) => (
                         <motion.div
-                        key={debugKey(`lap-${item._id}`, item, "ALL PASSIONS LIST LAPTOP")}
+                          key={debugKey(
+                            `lap-${item._id}`,
+                            item,
+                            "ALL PASSIONS LIST LAPTOP"
+                          )}
                           custom={directionP}
                           variants={slideVariants}
                           initial="enter"
@@ -1127,7 +1217,7 @@ function SelfReflextion() {
             <LoadingScreen />
           ) : (
             <>
-              <AnimatePresence >
+              <AnimatePresence>
                 {/* input ikigai */}
                 {!showIkigaiPic && (
                   <motion.div
@@ -1349,7 +1439,7 @@ function SelfReflextion() {
               </AnimatePresence>
               {showIkigaiPic && (
                 <div className="flex justify-center items-center w-full h-full ">
-                  <AnimatePresence >
+                  <AnimatePresence>
                     {showIkigaiPic && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.5 }}
@@ -1388,6 +1478,14 @@ function SelfReflextion() {
                 </div>
               )}
             </>
+          )
+        ) : whatToDo === "5/25" ? (
+          isLoading ? (
+            <LoadingScreen />
+          ) : (
+            <div className="w-full h-full overflow-y-auto  scroll-auto">
+              <FiveTwentyFiveRule />
+            </div>
           )
         ) : null}
       </div>

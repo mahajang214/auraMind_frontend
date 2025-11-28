@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "../../Components/Utils/ToastService";
 import AlarmTimer from "../../Components/AlarmTimer/AlarmTimer";
+import alarmAudio from "/public/alarm-audio.mp3";
 
 function Timer() {
   const [time, setTime] = useState({ hr: 0, min: 0, sec: 0 });
@@ -27,6 +28,10 @@ function Timer() {
   const [showBreak, SetshowBreak] = useState(false);
   const [pomodoroIsActive, setPomodoroIsActive] = useState(false);
   const [showPomodoroAsk, setShowPomodoroAsk] = useState(true);
+  const [haveToChangeTimer, setHaveToChangeTimer] = useState(false);
+  const [canWeFireSaveAPI, setCanWeFireSaveAPI] = useState(false);
+  // alarm
+  const audioRef = useRef(null);
 
   // console.log("redux track:", activeTrack);
   // console.log("redux User :",reduxUser)
@@ -98,6 +103,18 @@ function Timer() {
       t = new Date();
     return x.toDateString() === t.toDateString();
   };
+  // check maxtime
+  const lastTotal =
+    activeTrack.duration.hr * 3600 +
+    activeTrack.duration.min * 60 +
+    activeTrack.duration.sec;
+
+  const totalTime = time?.hr * 3600 + time?.min * 60 + time?.sec;
+
+  const MAX_TIME =
+    activeTrack.max_duration.hr * 3600 +
+    activeTrack.max_duration.min * 60 +
+    activeTrack.max_duration.sec;
 
   useEffect(() => {
     if (
@@ -115,35 +132,50 @@ function Timer() {
   }, []);
 
   const [saveClicked, setSaveClicked] = useState(false);
+  // console.log("max time : ", MAX_TIME);
+  // console.log("total track time : ", totalTime);
+  // console.log("last track time : ", lastTotal);
+  // console.log("last track time : ", lastTotal);
+
+  useEffect(() => {
+    if (totalTime >= MAX_TIME) {
+  
+      // Play alarm safely
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch((err) =>
+          console.warn("Autoplay blocked:", err)
+        );
+      }
+  
+      showToast(
+        "success",
+        "You reached your max time"
+      );
+    }
+  }, [totalTime]);  // runs ONLY when totalTime changes
+  
+
+  // console.log("time : ",time)
   const handleSave = async () => {
     // if (saveClicked) {
     setSaveClicked(!saveClicked);
     // }
     // Check if saved duration is greater than the last tracked duration; alert the user if so
     // Allow save if duration.hr > 5 and min > 0 and sec > 0, even if duration is greater than lastTrack.
-    const activeTotal =
-      activeTrack.duration.hr * 3600 +
-      activeTrack.duration.min * 60 +
-      activeTrack.duration.sec;
-
-    const lastTotal =
-      lastTrack.duration.hr * 3600 +
-      lastTrack.duration.min * 60 +
-      lastTrack.duration.sec;
-
-    const FIVE_HOURS = 5 * 3600;
-
-    // Allow if >= 5 hours
-    if (activeTotal >= FIVE_HOURS) {
-      // OK to continue
-    } else if (activeTotal <= lastTotal) {
-      // Not greater than last track → STOP
-      return;
-    }
 
     // If we reach here → continue saving
 
     try {
+      if (totalTime >= MAX_TIME) {
+      } else if (totalTime <= lastTotal) {
+        console.log("current track time is < last track time");
+        showToast("warning", "Please complete the last track");
+        setTime({ hr: lastTrack.hr, min: lastTrack.min, sec: lastTrack.sec });
+        return;
+      }
+
       setIsLoading(true);
       const response = await axios.patch(
         `${backendURL}/api/features/update-tracks/${activeTrack._id}`,
@@ -153,13 +185,16 @@ function Timer() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(response.data.data);
+      // console.log(response.data.data);
+      showToast("success", "Track saved successfully");
       setTracks(response.data.data);
       setActivateQuestions(true);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching tracks:", error.message);
+      setTime({ hr: lastTrack.hr, min: lastTrack.min, sec: lastTrack.sec });
+      showToast("error", "Something went wrong please try again later");
       setIsLoading(false);
+      console.error("Error fetching tracks:", error.message);
     }
   };
 
@@ -1025,6 +1060,21 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)]
           </div>
         </div>
       )}
+
+      <audio
+        controls
+        src={alarmAudio}
+        ref={audioRef}
+        preload="auto"
+        playsInline
+        className="hidden"
+        style={{ width: 280 }}
+        onCanPlayThrough={(e) => {
+          try {
+            e.target.volume = 1.0;
+          } catch (err) {}
+        }}
+      />
     </div>
   );
 }

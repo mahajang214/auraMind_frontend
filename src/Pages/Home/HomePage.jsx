@@ -39,6 +39,9 @@ const HomePage = () => {
     name: "",
     category: "",
     id: "",
+    mxHr: 0,
+    mxMin: 0,
+    mxSec: 0,
   });
   const [trackNewName, setTrackNewName] = useState("");
   const [trackNewCategory, setTrackNewCategory] = useState(null);
@@ -49,6 +52,10 @@ const HomePage = () => {
 
   // menu for delete and edit
   const [showMenu, setShowMenu] = useState(false);
+  const [maxDurationHr, setMaxDurationHr] = useState("");
+  const [maxDurationMin, setMaxDurationMin] = useState("");
+  const [maxDurationSec, setMaxDurationSec] = useState("");
+  
 
   // refresh token
   useEffect(() => {
@@ -93,7 +100,7 @@ const HomePage = () => {
       }
     };
     setWhichDevice(window.innerWidth >= 1024 ? "laptop" : "mobile");
-
+    
     if (!token) {
       navigate("/login");
       return;
@@ -259,12 +266,42 @@ const HomePage = () => {
   };
 
   // handle edit tracks
+  const handleEditButton = (track) => {
+    // TODO: handle edit logic here, e.g., open edit modal
+    // console.log("track : ", track);
+    setIsEdit(true);
+    return settrackOldData({
+      name: track.title,
+      category: track.category,
+      id: track._id,
+      mxHr: track.max_duration.hr,
+      mxMin: track.max_duration.min,
+      mxSec: track.max_duration.sec,
+    });
+  };
+
   const handleEditTracks = async (id) => {
     try {
+      // console.log("maxDurationHr: ", maxDurationHr);
+      // console.log("maxDurationMin: ", maxDurationMin);
+      // console.log("maxDurationSec: ", maxDurationSec);
+      // // Log the old track data before updating for debugging
+      // console.log("Old track data:", {
+      //   hr: trackOldData.mxHr,
+      //   min: trackOldData.mxMin,
+      //   sec: trackOldData.mxSec,
+      // });
+
       if (!id) {
         return showToast("warning", "Something went wrong!");
       }
-      if (trackNewCategory === null && trackNewName === "") {
+      if (
+        trackNewCategory === null &&
+        trackNewName === "" &&
+        maxDurationHr === 0 &&
+        maxDurationMin === 0 &&
+        maxDurationSec === 0
+      ) {
         return showToast("warning", "Please edit before saving");
       }
       const res = await axios.patch(
@@ -272,6 +309,12 @@ const HomePage = () => {
         {
           title: trackNewName || trackOldData.name,
           category: trackNewCategory || trackOldData.category,
+          max_duration: {
+            hr: maxDurationHr === "" ? null : Number(maxDurationHr),
+            min: maxDurationMin === "" ? null : Number(maxDurationMin),
+            sec: maxDurationSec === "" ? null : Number(maxDurationSec),
+          },
+                    
         },
         {
           withCredentials: true,
@@ -279,7 +322,8 @@ const HomePage = () => {
         }
       );
       showToast("success", "successfully update track");
-      settrackOldData({ name: "", category: "", id: "" });
+      // settrackOldData({ name: "", category: "", id: "" });
+      settrackOldData({ name: "", category: "", id: "", hr:0,min:0,sec:0 });
       setTrackNewCategory(null);
       setTrackNewName("");
       return;
@@ -450,12 +494,7 @@ const HomePage = () => {
                             >
                               <button
                                 onClick={() => {
-                                  setIsEdit(true);
-                                  settrackOldData({
-                                    name: activeTrackInfo.title,
-                                    category: activeTrackInfo.category,
-                                    id: activeTrackInfo._id,
-                                  });
+                                  handleEditButton(activeTrackInfo);
                                   return setShowMenu(false);
                                 }}
                                 className="px-4 py-2 hover:bg-[#31363b] text-left text-white w-full cursor-pointer"
@@ -719,14 +758,7 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                         aria-label={`Edit track "${track.title}"`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          // TODO: handle edit logic here, e.g., open edit modal
-
-                          setIsEdit(true);
-                          return settrackOldData({
-                            name: track.title,
-                            category: track.category,
-                            id: track._id,
-                          });
+                          return handleEditButton(track);
                         }}
                         type="button"
                       >
@@ -781,25 +813,27 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                             : "text-red-500 font-semibold text-2xl text-left w-full"
                         }
                       >
-                        <span className="text-white">Status :</span>{" "}
+                        <span className="text-white text-2xl text-left w-full">Status :</span>{" "}
                         {activeTrackInfo.answersCompleted
                           ? "Completed"
                           : "Incompleted"}
                       </h3>
-                      <h2 className="text-2xl text-left w-full">
-                        Created At:{" "}
-                        {activeTrackInfo.createdAt &&
-                          new Date(activeTrackInfo.createdAt).toLocaleString(
-                            "en-US",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                      </h2>
+                      <h2 className="text-2xl text-left w-full">Max Duration : <span className="mx-1">
+                              {String(activeTrackInfo.max_duration.hr).padStart(
+                                2,
+                                "0"
+                              )}
+                            </span> : <span className="mx-1">
+                              {String(activeTrackInfo.max_duration.min).padStart(
+                                2,
+                                "0"
+                              )}
+                            </span> : <span className="mx-1">
+                              {String(activeTrackInfo.max_duration.sec).padStart(
+                                2,
+                                "0"
+                              )}
+                            </span></h2>
                       <h2 className="text-2xl text-left w-full">
                         Created At:{" "}
                         {activeTrackInfo.updatedAt &&
@@ -814,6 +848,21 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                             }
                           )}
                       </h2>
+                      <h2 className="text-2xl text-left w-full">
+                        Updated At:{" "}
+                        {activeTrackInfo.createdAt &&
+                          new Date(activeTrackInfo.createdAt).toLocaleString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                      </h2>
+                      
                     </motion.div>
                     <motion.div
                       className="second_Container bg-[#222831] w-2/5  gap-4 py-6 px-8 rounded-lg"
@@ -1247,6 +1296,53 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                 <option value="Entertainment">Entertainment</option>
                 <option value="Other">Other</option>
               </select>
+
+              <label
+                className="text-sm text-gray-300 w-full mb-1"
+                htmlFor="max_duration_hr"
+              >
+                Max Duration
+              </label>
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  id="max_duration_hr"
+                  type="number"
+                  min="0"
+                  placeholder="hr"
+                  value={
+                    maxDurationHr === "" ? trackOldData.mxHr : maxDurationHr
+                  }
+                  onChange={(e) => setMaxDurationHr(e.target.value)}
+                  className="w-16 bg-[#1F242A] text-white px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#00ADB5] transition"
+                />
+                <span className="text-gray-400">hr</span>
+                <input
+                  id="max_duration_min"
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="min"
+                  value={
+                    maxDurationMin === "" ? trackOldData.mxMin : maxDurationMin
+                  }
+                  onChange={(e) => setMaxDurationMin(e.target.value)}
+                  className="w-16 bg-[#1F242A] text-white px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#00ADB5] transition"
+                />
+                <span className="text-gray-400">min</span>
+                <input
+                  id="max_duration_sec"
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="sec"
+                  value={
+                    maxDurationSec === "" ? trackOldData.mxSec : maxDurationSec
+                  }
+                  onChange={(e) => setMaxDurationSec(e.target.value)}
+                  className="w-16 bg-[#1F242A] text-white px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-[#00ADB5] transition"
+                />
+                <span className="text-gray-400">sec</span>
+              </div>
 
               <div className="flex justify-between w-full mt-1 gap-2">
                 <button
