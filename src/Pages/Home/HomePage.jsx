@@ -13,6 +13,7 @@ import { showToast } from "../../Components/Utils/ToastService.jsx";
 import { debugKey } from "../../Components/Debuger/DebugKeys.js";
 import MobileHome from "../../Components/MobileHome/MobileHome.jsx";
 import TracksListMobile from "../../Components/TrackListForMobile/TracksListMobile.jsx";
+import CongratsCard from "../../Components/CongradulationsCard/CongratsCard.jsx";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -46,6 +47,17 @@ const HomePage = () => {
   const [trackNewName, setTrackNewName] = useState("");
   const [trackNewCategory, setTrackNewCategory] = useState(null);
 
+  // popup congradulation card
+  const [isAllTaskCompleted, setIsAllTaskCompleted] = useState(0);
+  const [AllTaskTotalNumbers, setAllTaskTotalNumbers] = useState(0);
+  const [showCongrats, setShowCongrats] = useState(false);
+
+  useEffect(() => {
+    if (AllTaskTotalNumbers === isAllTaskCompleted) {
+      setTimeout(() => setShowCongrats(true), 5 * 60 * 1000); // run after 5 minutes
+    }
+  }, [isAllTaskCompleted]);
+
   // store
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
@@ -55,7 +67,6 @@ const HomePage = () => {
   const [maxDurationHr, setMaxDurationHr] = useState("");
   const [maxDurationMin, setMaxDurationMin] = useState("");
   const [maxDurationSec, setMaxDurationSec] = useState("");
-  
 
   // refresh token
   useEffect(() => {
@@ -100,7 +111,7 @@ const HomePage = () => {
       }
     };
     setWhichDevice(window.innerWidth >= 1024 ? "laptop" : "mobile");
-    
+
     if (!token) {
       navigate("/login");
       return;
@@ -129,24 +140,6 @@ const HomePage = () => {
     setActiveTrackInfo(trackDetails);
   };
 
-  // useEffect(() => {
-  //   // Check for previous login (token in localStorage)
-
-  //   if (token) {
-  //     // Optionally: validate token with backend here
-  //     if (lastLoginDate === currentDate) {
-  //       console.log("Already logged in!");
-  //     } else {
-  //       resetTasks();
-  //       localStorage.setItem("lastLoginDate", currentDate);
-  //     }
-  //     // You can redirect to a dashboard or other page here if needed
-  //     //   navigate("/dashboard");
-  //   } else {
-  //     navigate("/login");
-  //   }
-  // }, []);
-
   const getTracks = async () => {
     try {
       setIsLoading(true);
@@ -159,6 +152,13 @@ const HomePage = () => {
       );
       // console.log(response.data.data);
       setTracks(response.data.data);
+      setAllTaskTotalNumbers(response.data.data.length);
+      const completedTasksCount = response.data.data.filter(
+        (e) => e.answersCompleted === true
+      ).length;
+      setIsAllTaskCompleted(completedTasksCount);
+      // console.log("task completed: ",isAllTaskCompleted,"\nTotal task: ",AllTaskTotalNumbers);
+
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching tracks:", error);
@@ -173,8 +173,9 @@ const HomePage = () => {
         withCredentials: true,
         headers: { Authorization: `Bearer ${token}` },
       });
-      // console.log("user info : ", response.data.data);
+      // console.log("user info : ", response.data.data[0]);
       setUserInfo(response.data.data);
+      // console.log("streak: ",userInfo[0].streak.length)
       dispatch(setUser(response.data.data));
       dispatch(setAuth(true));
       if (response.data.data[0].dailyReward) {
@@ -314,7 +315,6 @@ const HomePage = () => {
             min: maxDurationMin === "" ? null : Number(maxDurationMin),
             sec: maxDurationSec === "" ? null : Number(maxDurationSec),
           },
-                    
         },
         {
           withCredentials: true,
@@ -323,7 +323,14 @@ const HomePage = () => {
       );
       showToast("success", "successfully update track");
       // settrackOldData({ name: "", category: "", id: "" });
-      settrackOldData({ name: "", category: "", id: "", hr:0,min:0,sec:0 });
+      settrackOldData({
+        name: "",
+        category: "",
+        id: "",
+        hr: 0,
+        min: 0,
+        sec: 0,
+      });
       setTrackNewCategory(null);
       setTrackNewName("");
       return;
@@ -813,27 +820,36 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                             : "text-red-500 font-semibold text-2xl text-left w-full"
                         }
                       >
-                        <span className="text-white text-2xl text-left w-full">Status :</span>{" "}
+                        <span className="text-white text-2xl text-left w-full">
+                          Status :
+                        </span>{" "}
                         {activeTrackInfo.answersCompleted
                           ? "Completed"
                           : "Incompleted"}
                       </h3>
-                      <h2 className="text-2xl text-left w-full">Max Duration : <span className="mx-1">
-                              {String(activeTrackInfo.max_duration.hr).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span> : <span className="mx-1">
-                              {String(activeTrackInfo.max_duration.min).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span> : <span className="mx-1">
-                              {String(activeTrackInfo.max_duration.sec).padStart(
-                                2,
-                                "0"
-                              )}
-                            </span></h2>
+                      <h2 className="text-2xl text-left w-full">
+                        Max Duration :{" "}
+                        <span className="mx-1">
+                          {String(activeTrackInfo.max_duration.hr).padStart(
+                            2,
+                            "0"
+                          )}
+                        </span>{" "}
+                        :{" "}
+                        <span className="mx-1">
+                          {String(activeTrackInfo.max_duration.min).padStart(
+                            2,
+                            "0"
+                          )}
+                        </span>{" "}
+                        :{" "}
+                        <span className="mx-1">
+                          {String(activeTrackInfo.max_duration.sec).padStart(
+                            2,
+                            "0"
+                          )}
+                        </span>
+                      </h2>
                       <h2 className="text-2xl text-left w-full">
                         Created At:{" "}
                         {activeTrackInfo.updatedAt &&
@@ -862,7 +878,6 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
                             }
                           )}
                       </h2>
-                      
                     </motion.div>
                     <motion.div
                       className="second_Container bg-[#222831] w-2/5  gap-4 py-6 px-8 rounded-lg"
@@ -1368,6 +1383,29 @@ hover:shadow-[0_0_35px_rgba(244,63,94,0.9)] text-[#FFD369] px-4 h-full  font-sem
             </motion.div>
           </motion.div>
         </AnimatePresence>
+      )}
+
+      {/* congradulations card when all task completed */}
+      {showCongrats === true && (
+        <CongratsCard
+          open={showCongrats}
+          onClose={() => setShowCongrats(false)}
+          onShare={() => {
+            // share logic e.g. open Share modal, navigator.share or copy URL
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied");
+          }}
+          title={
+            userInfo && userInfo[0]
+              ? `${userInfo[0].firstName || "User"} ${userInfo[0].lastName || ""}`.trim()
+              : "User"
+          }
+          subtitle="You completed every task you planned for today. Stellar work."
+          tasksCompleted={isAllTaskCompleted}
+          totalTasks={AllTaskTotalNumbers}
+          streak={userInfo && userInfo[0] && Array.isArray(userInfo[0].streak) ? userInfo[0].streak.length : 0}
+          gems={userInfo && userInfo[0] && typeof userInfo[0].gems === "number" ? userInfo[0].gems : 0}
+        />
       )}
     </>
   );

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 export default function LoadingScreen() {
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full bg-[#222831] text-white">
+    <div className="flex flex-col items-center justify-center h-full w-full bg-transparent text-white">
       {/* Animated Spinner Circle */}
       <motion.div
         className="w-24 h-24 border-4 border-t-[#00ADB5] border-[#393E46] rounded-full"
